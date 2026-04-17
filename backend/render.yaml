@@ -1,0 +1,22 @@
+# render.yaml — Render deployment config
+# Render reads this file automatically when you connect your repo.
+# The free "web service" plan is more than enough for a portfolio backend.
+
+services:
+  - type: web
+    name: alhasan-portfolio-api
+    runtime: python
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: GROQ_API_KEY
+        sync: false        # you fill this in the Render dashboard
+      - key: RESEND_API_KEY
+        sync: false        # you fill this in the Render dashboard
+      - key: CONTACT_EMAIL_TO
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
