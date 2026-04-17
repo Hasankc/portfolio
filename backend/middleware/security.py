@@ -1,63 +1,94 @@
 """
 security.py — rate limiting, input sanitisation, response headers
 
-Nothing here is magic — it's just a few standard tools wired together:
-  - slowapi for rate limiting (per IP, in-memory)
-  - bleach for stripping HTML from user input
-  - a hardcoded dict of security headers we attach to every response
+Replaced slowapi with a simple built-in rate limiter to avoid the
+slowapi/limits version conflict that was crashing the app on Render.
+
+The custom limiter stores request counts in a plain dict — totally
+fine for a portfolio site that gets maybe a few dozen requests a day.
+If this ever needs to scale, swap it for Redis + a proper library.
 """
 from __future__ import annotations
 
 import re
+import time
 import bleach
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from collections import defaultdict
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
 
-# limiter instance — imported by main.py and the individual route files
-# using the client IP as the key. for prod behind a proxy, make sure
-# FORWARDED or X-Real-IP headers are trusted (depends on your hosting setup)
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/hour"])
+# ── simple in-memory rate limiter ─────────────────────────────────────────────
+
+# stores: { ip: [(timestamp, endpoint), ...] }
+_request_log: dict[str, list[tuple[float, str]]] = defaultdict(list)
 
 
-def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:
-    """return a friendly 429 instead of the default slowapi error format"""
-    return JSONResponse(
-        status_code=429,
-        content={"detail": "Too many requests — slow down and try again in a bit."},
-    )
+def _check_rate_limit(request: Request, max_requests: int, window_seconds: int) -> bool:
+    """
+    Returns True if the request is allowed, False if rate limit exceeded.
+    Cleans up old entries on every call so memory doesn't grow forever.
+    """
+    ip       = request.client.host if request.client else "unknown"
+    endpoint = request.url.path
+    now      = time.time()
+    cutoff   = now - window_seconds
+
+    # remove entries older than the window
+    _request_log[ip] = [
+        (ts, ep) for ts, ep in _request_log[ip]
+        if ts > cutoff and ep == endpoint
+    ]
+
+    if len(_request_log[ip]) >= max_requests:
+        return False
+
+    _request_log[ip].append((now, endpoint))
+    return True
+
+
+def rate_limit(max_requests: int, window_seconds: int = 3600):
+    """
+    Decorator factory — use like:
+        @router.post("/contact")
+        @rate_limit(max_requests=5, window_seconds=3600)
+        async def contact(request: Request, ...):
+    """
+    def decorator(func):
+        import functools
+
+        @functools.wraps(func)
+        async def wrapper(request: Request, *args, **kwargs):
+            if not _check_rate_limit(request, max_requests, window_seconds):
+                return JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many requests — slow down and try again later."},
+                )
+            return await func(request, *args, **kwargs)
+
+        return wrapper
+    return decorator
 
 
 # ── input sanitisation ────────────────────────────────────────────────────────
 
 def sanitize(value: str, max_len: int = 2000) -> str:
-    """
-    Strip all HTML tags from a string, collapse whitespace, and trim to max_len.
-
-    Using bleach here because it handles edge cases (malformed tags, entities)
-    better than a simple regex would. The empty tags/attrs lists mean we strip
-    absolutely everything — no exceptions.
-    """
+    """Strip all HTML, collapse whitespace, trim to max_len."""
     cleaned = bleach.clean(value, tags=[], attributes={}, strip=True)
-    # collapse multiple spaces/newlines down to single spaces
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned[:max_len]
 
 
 def sanitize_email(email: str) -> str:
-    """sanitize then do a basic format check — pydantic catches most email issues
-    upstream but this is a second line of defence"""
+    """Sanitize then basic format check."""
     clean = sanitize(email, max_len=254).lower()
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", clean):
-        raise ValueError(f"email address looks invalid: {email!r}")
+        raise ValueError(f"invalid email: {email!r}")
     return clean
 
 
 # ── security response headers ─────────────────────────────────────────────────
-# These get attached to every response by the middleware in main.py.
-# Adjust CSP if you add third-party scripts in the future.
+
 SECURITY_HEADERS: dict[str, str] = {
     "X-Content-Type-Options":    "nosniff",
     "X-Frame-Options":           "DENY",

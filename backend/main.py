@@ -1,11 +1,11 @@
 """
 main.py — portfolio backend
 
-FastAPI app for the portfolio. Handles the contact form (via Resend, free)
-and the AI chat (via Groq, free). Both are 100% free to use.
+FastAPI app. No slowapi dependency — rate limiting is handled
+by the custom limiter in middleware/security.py using stdlib only.
 
-Local dev:  uvicorn main:app --reload --port 8000
-Production: runs on Render free tier (see render.yaml in the repo root)
+Local:      uvicorn main:app --reload --port 8000
+Production: Render reads the start command from the dashboard
 """
 from __future__ import annotations
 
@@ -17,10 +17,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 
-from middleware.security import limiter, SECURITY_HEADERS, rate_limit_exceeded_handler
+from middleware.security import SECURITY_HEADERS
 from routes import contact, ai
 
 load_dotenv()
@@ -34,9 +32,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("backend starting — using Groq (AI) + Resend (email), both free")
+    logger.info("portfolio backend starting — Groq (AI) + Resend (email), both free")
     yield
-    logger.info("backend shutting down")
+    logger.info("portfolio backend shutting down")
 
 
 app = FastAPI(
@@ -47,12 +45,7 @@ app = FastAPI(
     lifespan  = lifespan,
 )
 
-# rate limiting
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
-app.add_middleware(SlowAPIMiddleware)
-
-# CORS — read allowed origins from env, fall back to localhost for dev
+# CORS
 raw_origins    = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
 allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
 
@@ -79,7 +72,6 @@ app.include_router(ai.router,      prefix="/api")
 
 @app.get("/api/health")
 async def health():
-    """health check — used by Render's uptime monitor"""
     return {"status": "ok", "service": "portfolio-api", "version": "1.0.0"}
 
 

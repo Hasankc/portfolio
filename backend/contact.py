@@ -1,8 +1,12 @@
 """
 contact.py — POST /api/contact
 
-Validates and sanitises the contact form, then sends an email via Resend.
-Rate limited to 5 requests per IP per hour using the built-in limiter.
+Receives contact form submissions and sends an email via Resend.
+Resend free tier = 3,000 emails/month, no credit card needed.
+Sign up at resend.com — takes 2 minutes.
+
+If RESEND_API_KEY isn't set we just log the message instead of
+crashing — makes local dev easy without needing a real API key.
 """
 from __future__ import annotations
 
@@ -10,11 +14,10 @@ import logging
 import os
 
 import resend
-from fastapi  import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi  import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, field_validator
 
-from middleware.security import rate_limit, sanitize, sanitize_email
+from middleware.security import limiter, sanitize, sanitize_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -57,14 +60,22 @@ class ContactPayload(BaseModel):
 
 
 def _send_email(payload: ContactPayload) -> None:
-    """Send via Resend. Logs only if key not configured (local dev)."""
+    """
+    Send notification email via Resend.
+    Uses resend v2 API — params are passed as a plain dict.
+    Falls back to logging only if the key isn't configured.
+    """
     api_key = os.getenv("RESEND_API_KEY", "")
     to_addr = os.getenv("CONTACT_EMAIL_TO", "alhasanal_qaysi@yahoo.com")
 
     if not api_key:
-        logger.warning("RESEND_API_KEY not set — contact from %s <%s>", payload.name, payload.email)
+        logger.warning(
+            "RESEND_API_KEY not set — contact from %s <%s>: %s",
+            payload.name, payload.email, payload.subject,
+        )
         return
 
+    # set the key before every call (module-level assignment, safe to repeat)
     resend.api_key = api_key
 
     html_body = f"""
@@ -90,6 +101,7 @@ def _send_email(payload: ContactPayload) -> None:
     </div>
     """
 
+    # resend v2 API — plain dict, no TypedDict needed
     params: resend.Emails.SendParams = {
         "from":     "Portfolio <onboarding@resend.dev>",
         "to":       [to_addr],
@@ -101,15 +113,19 @@ def _send_email(payload: ContactPayload) -> None:
 
 
 @router.post("/contact")
-@rate_limit(max_requests=5, window_seconds=3600)
+@limiter.limit("5/hour")
 async def contact(request: Request, payload: ContactPayload):
+    """
+    Handle contact form submission.
+    5 requests/hour per IP — enough for humans, stops spam bots.
+    """
     try:
         _send_email(payload)
         logger.info("contact form: %s <%s>", payload.name, payload.email)
         return {"success": True, "message": "Got it — I'll get back to you soon!"}
     except Exception as exc:
-        logger.exception("contact email failed: %s", exc)
-        return JSONResponse(
+        logger.exception("Error sending contact email: %s", exc)
+        raise HTTPException(
             status_code=500,
-            content={"detail": "Couldn't send right now. Email alhasanal_qaysi@yahoo.com directly."},
+            detail="Couldn't send right now. Please email alhasanal_qaysi@yahoo.com directly.",
         )

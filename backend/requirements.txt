@@ -4,18 +4,16 @@ python-dotenv==1.0.1
 pydantic==2.8.2
 email-validator==2.2.0
 
-# free AI chat — groq.com, no credit card
+# free AI — groq.com (no credit card)
 groq==0.9.0
 
-# free email — resend.com, no credit card
+# free email — resend.com (no credit card)
 resend==2.2.0
-
-# rate limiting — pin limits to 3.x so slowapi 0.1.9 works correctly
-# limits 5.x broke the internal API that slowapi depends on
-slowapi==0.1.9
-limits==3.7.0
 
 # html sanitisation
 bleach==6.1.0
 
 httpx==0.27.0
+
+# NOTE: slowapi removed — we use a simple built-in rate limiter instead
+# to avoid the slowapi/limits version conflict that crashes on Render

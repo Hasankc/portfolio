@@ -1,20 +1,17 @@
-# render.yaml — tells Render exactly how to build and run the backend
-# The key fix: runtime.pythonVersion forces Python 3.11 instead of
-# the default which was 3.14 — pydantic-core doesn't have a wheel for 3.14 yet
+# render.yaml — Render deployment config
+# This file tells Render how to build and start the backend.
+# Python 3.11 is required — pydantic-core has no wheel for 3.14+
 
 services:
   - type: web
     name: alhasan-portfolio-api
     runtime: python
-    rootDir: .
     pythonVersion: "3.11.9"
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: ENVIRONMENT
         value: production
-      - key: PYTHON_VERSION
-        value: "3.11.9"
       - key: GROQ_API_KEY
         sync: false
       - key: RESEND_API_KEY
