@@ -1,20 +1,21 @@
+# pinned to Python 3.11 compatible versions
+# pydantic-core 2.20.1 has no wheel for Python 3.14 — stay on 3.11
+
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 python-dotenv==1.0.1
 pydantic==2.8.2
-pydantic[email]
+email-validator==2.2.0
 
-# AI chat — Groq is 100% free, no credit card needed
-# sign up at console.groq.com
+# AI chat — Groq is 100% free, no credit card
 groq==0.9.0
 
-# Email — Resend free tier: 3,000 emails/month, no credit card
-# sign up at resend.com
+# Email — Resend free tier 3,000 emails/month, no credit card
 resend==2.2.0
 
 # Security
 slowapi==0.1.9
 bleach==6.1.0
 
-# HTTP
+# HTTP client (used by groq and resend internally)
 httpx==0.27.0
