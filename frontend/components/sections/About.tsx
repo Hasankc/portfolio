@@ -6,7 +6,7 @@ import { Code2, Zap, Heart, Trophy } from 'lucide-react';
 // quick stat cards at the bottom of the about section
 // TODO: update these as the numbers grow
 const stats = [
-  { label: 'Years Experience', value: '2+',  icon: Code2  },
+  { label: 'Years Experience', value: '5+',  icon: Code2  },
   { label: 'Bugs Fixed',       value: '20+', icon: Zap    },
   { label: 'Orgs on Platform', value: '1K+', icon: Heart  },
   { label: 'Hackathon Wins',   value: '1',   icon: Trophy },

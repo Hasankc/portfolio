@@ -98,7 +98,7 @@ export function Hero() {
           </div>
 
           <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-lg">
-            Full-stack developer with 2+ years building web apps in Helsinki. I care about
+            Full-stack developer with 5+ years building web apps in Helsinki. I care about
             fast, accessible products — from pixel-perfect UIs to the APIs behind them.
           </p>
 
@@ -185,7 +185,7 @@ export function Hero() {
               className="absolute -bottom-4 -left-8 glass rounded-xl px-4 py-2.5 text-sm font-medium shadow-xl"
               style={{ border: '1px solid var(--border)' }}
             >
-              <span className="text-[var(--accent)]" style={{ fontFamily: 'var(--font-mono)' }}>2+</span>
+              <span className="text-[var(--accent)]" style={{ fontFamily: 'var(--font-mono)' }}>5+</span>
               <span className="text-[var(--text-secondary)] ml-1">years exp.</span>
             </div>
             <div

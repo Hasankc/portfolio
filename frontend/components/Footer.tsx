@@ -12,7 +12,7 @@ const navLinks = [
 const socials = [
   { icon: Github,   href: 'https://github.com/Hasankc',                  label: 'GitHub'   },
   { icon: Mail,     href: 'mailto:alhasanal_qaysi@yahoo.com',             label: 'Email'    },
-  { icon: Linkedin, href: 'https://linkedin.com/in/alhasan-al-qaysi',    label: 'LinkedIn' },
+  { icon: Linkedin, href: 'https://www.linkedin.com/in/hasanalqaysi/',    label: 'LinkedIn' },
 ];
 
 export function Footer() {

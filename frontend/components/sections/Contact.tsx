@@ -25,7 +25,7 @@ const contacts = [
   { icon: Phone,    label: 'Phone',    value: '+358 45 113 9969',                 href: 'tel:+358451139969' },
   { icon: MapPin,   label: 'Location', value: 'Helsinki, Finland',                href: null },
   { icon: Github,   label: 'GitHub',   value: 'github.com/Hasankc',              href: 'https://github.com/Hasankc' },
-  { icon: Linkedin, label: 'LinkedIn', value: 'linkedin.com/in/alhasan-al-qaysi', href: 'https://linkedin.com/in/alhasan-al-qaysi' },
+  { icon: Linkedin, label: 'LinkedIn', value: 'linkedin.com/in/hasanalqaysi', href: 'https://www.linkedin.com/in/hasanalqaysi/' },
 ];
 
 export function Contact() {
