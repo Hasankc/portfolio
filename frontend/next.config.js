@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ignore TS and ESLint errors during build so the site deploys
-  // we can clean these up later once the site is live
   typescript: {
     ignoreBuildErrors: true,
   },
