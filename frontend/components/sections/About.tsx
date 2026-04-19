@@ -1,116 +1,141 @@
 'use client';
-
 import { useEffect, useRef } from 'react';
-import { Code2, Zap, Heart, Trophy } from 'lucide-react';
+import { Code2, Zap, Users, Trophy } from 'lucide-react';
 
-// quick stat cards at the bottom of the about section
-// TODO: update these as the numbers grow
-const stats = [
-  { label: 'Years Experience', value: '5+',  icon: Code2  },
-  { label: 'Bugs Fixed',       value: '20+', icon: Zap    },
-  { label: 'Orgs on Platform', value: '1K+', icon: Heart  },
-  { label: 'Hackathon Wins',   value: '1',   icon: Trophy },
+const STATS = [
+  { id: 'years',   v: '5+',  label: 'Years Experience', Icon: Code2,  color: '#0d9488' },
+  { id: 'bugs',    v: '50+', label: 'Bugs Squashed',    Icon: Zap,    color: '#d97706' },
+  { id: 'orgs',    v: '1K+', label: 'Orgs on Platform', Icon: Users,  color: '#7c3aed' },
+  { id: 'awards',  v: '1',   label: 'Hackathon Award',  Icon: Trophy, color: '#059669' },
 ];
 
 export function About() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    // stagger the reveal animations so elements don't all pop in at once
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.querySelectorAll('.reveal').forEach((el, i) => {
-              setTimeout(() => el.classList.add('visible'), i * 100);
-            });
-          }
-        });
+    const obs = new IntersectionObserver(
+      es => {
+        if (es[0].isIntersecting)
+          es[0].target.querySelectorAll('.reveal').forEach((el, i) =>
+            setTimeout(() => el.classList.add('in'), i * 90));
       },
-      { threshold: 0.15 },
+      { threshold: 0.1 }
     );
-
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
   return (
-    <section id="about" ref={sectionRef} className="section-padding">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+    /* id="about" — scroll target for nav link */
+    <section
+      id="about"
+      ref={ref}
+      data-section="about"
+      data-testid="about-section"
+      className="sec"
+    >
+      <div id="about-inner" className="wrap">
+        <div
+          id="about-grid"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '48px 64px', alignItems: 'center' }}
+        >
 
-          {/* left — bio text */}
-          <div className="space-y-6">
+          {/* id="about-text" — bio text column */}
+          <div id="about-text" data-testid="about-text" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            <div className="reveal">
-              <p
-                className="text-[var(--accent)] text-sm mb-3 tracking-widest uppercase"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              >
-                // about me
-              </p>
-              <h2 className="section-title">
+            {/* id="about-header" — section label + heading */}
+            <div id="about-header" className="reveal">
+              <p id="about-label" className="label" style={{ marginBottom: 10 }}>// about me</p>
+              <h2 id="about-heading" className="subhead">
                 Passionate about{' '}
-                <span className="gradient-text">crafting</span>{' '}
-                the web
+                <span id="about-heading-grad" className="grad" style={{ paddingRight: 4 }}>crafting</span>
+                {' '}the web
               </h2>
             </div>
 
-            <p className="reveal text-[var(--text-secondary)] text-lg leading-relaxed">
-              I&apos;m a full-stack developer based in Helsinki, Finland. Currently at{' '}
-              <span className="text-[var(--accent)] font-medium">Cyberday | Agendium Oy</span>,
-              building the frontend of a cybersecurity compliance platform that over 1,000
-              organizations rely on day-to-day.
+            {/* id="about-para-1" — current job paragraph */}
+            <p id="about-para-1" className="reveal" style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.85 }}>
+              I&apos;m a full-stack developer based in Helsinki with 5+ years building web applications
+              people actually enjoy using. Currently at{' '}
+              <strong id="about-employer" style={{ color: 'var(--text1)', fontWeight: 600 }}>
+                Cyberday | Agendium Oy
+              </strong>,
+              building the frontend of a cybersecurity compliance platform trusted by 1,000+ organizations worldwide.
             </p>
 
-            <p className="reveal text-[var(--text-secondary)] leading-relaxed">
-              I started out just curious about how websites actually work. That curiosity
-              turned into a career. I like clean code, good design, and solving problems
-              that actually matter to users — not just ticking story points.
+            {/* id="about-para-2" — work philosophy */}
+            <p id="about-para-2" className="reveal" style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.85 }}>
+              I thrive in collaborative Agile teams and believe great software comes from empathy for users,
+              clean thinking, and a constant drive to improve. I pick up new tools fast and love solving
+              problems that actually matter.
             </p>
 
-            <p className="reveal text-[var(--text-secondary)] leading-relaxed">
-              Outside of work I&apos;ve been exploring Web3. In 2022 I won 2nd place at{' '}
-              <span className="text-[var(--accent)] font-medium">Junction 2022</span> for
-              building a marketplace that uses blockchain + Google Cloud Video Intelligence
-              to make sure content creators get paid fairly based on how their work performs.
+            {/* id="about-para-3" — hackathon / web3 */}
+            <p id="about-para-3" className="reveal" style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.85 }}>
+              Outside of work I explore Web3. In 2022 I took{' '}
+              <strong id="about-award" style={{ color: 'var(--accent3)', fontWeight: 600 }}>
+                2nd place at Junction 2022
+              </strong>{' '}
+              for building a marketplace using blockchain + Google Cloud Video Intelligence to ensure
+              fair pay for content creators based on actual performance metrics.
             </p>
 
-            <div className="reveal flex gap-4 pt-2">
-              <a href="#contact" className="btn-primary">Let&apos;s Work Together</a>
+            {/* id="about-cta-buttons" — action buttons */}
+            <div id="about-cta-buttons" className="reveal" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 4 }}>
+              <a id="about-cta-contact" href="#contact" className="btn btn-primary">Let&apos;s Work Together</a>
               <a
+                id="about-cta-github"
                 href="https://github.com/Hasankc"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary"
+                className="btn btn-outline"
               >
-                GitHub
+                View GitHub
               </a>
             </div>
           </div>
 
-          {/* right — stat cards grid */}
-          <div className="grid grid-cols-2 gap-5">
-            {stats.map(({ label, value, icon: Icon }, i) => (
+          {/* id="about-stats-grid" — the 4 stat cards */}
+          <div
+            id="about-stats-grid"
+            data-testid="about-stats"
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}
+          >
+            {STATS.map(({ id, v, label, Icon, color }, i) => (
+              /* id="about-stat-{id}" — individual stat card */
               <div
-                key={label}
-                className="reveal glass-card p-7 space-y-4"
-                style={{ transitionDelay: `${i * 80}ms` }}
+                key={id}
+                id={`about-stat-${id}`}
+                data-testid={`about-stat-${id}`}
+                data-stat-value={v}
+                className="reveal card"
+                style={{ padding: 22, transitionDelay: `${i * 80}ms` }}
               >
+                {/* id="about-stat-{id}-icon" — colored icon box */}
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--accent-glow)', border: '1px solid var(--border)' }}
+                  id={`about-stat-${id}-icon`}
+                  style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: `${color}12`, border: `1px solid ${color}25`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: 14,
+                  }}
                 >
-                  <Icon size={18} className="text-[var(--accent)]" />
+                  <Icon size={18} style={{ color }} />
                 </div>
-                <div>
-                  <div
-                    className="text-4xl font-bold gradient-text"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    {value}
-                  </div>
-                  <div className="text-sm text-[var(--text-secondary)] mt-1">{label}</div>
+                {/* id="about-stat-{id}-value" — big number */}
+                <div
+                  id={`about-stat-${id}-value`}
+                  style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color, lineHeight: 1 }}
+                >
+                  {v}
+                </div>
+                {/* id="about-stat-{id}-label" — descriptor text */}
+                <div
+                  id={`about-stat-${id}-label`}
+                  style={{ fontSize: 12, color: 'var(--text2)', marginTop: 6, fontWeight: 500 }}
+                >
+                  {label}
                 </div>
               </div>
             ))}

@@ -1,307 +1,245 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { Github, ExternalLink, Star, GitFork, Loader2, RefreshCw } from 'lucide-react';
 
-interface GitHubRepo {
-  id:               number;
-  name:             string;
-  description:      string | null;
-  html_url:         string;
-  homepage:         string | null;
-  topics:           string[];
-  language:         string | null;
-  stargazers_count: number;
-  forks_count:      number;
-  updated_at:       string;
-  fork:             boolean;
+interface Repo {
+  id: number; name: string; description: string | null;
+  html_url: string; homepage: string | null; topics: string[];
+  language: string | null; stargazers_count: number; forks_count: number; fork: boolean;
 }
 
-// these two always show at the top regardless of what the GitHub API returns —
-// they're the projects I'm most proud of and want recruiters to see first
-const featured = [
+const FEATURED = [
   {
-    name:        'Adverse Marketplace',
-    description: 'Web3 marketplace that ensures fair pay for content creators based on actual content performance — not flat rates. Built during Junction 2022 hackathon in 48 hours. Won 2nd place in the TX Web3 challenge track.',
-    html_url:    'https://github.com/Hasankc',
-    homepage:    null as string | null,
-    topics:      ['react', 'web3', 'nodejs', 'blockchain', 'google-cloud'],
-    language:    'TypeScript',
-    award:       '🏆 Junction 2022 — 2nd Place',
+    id: 'adverse-marketplace',
+    name: 'Adverse Marketplace',
+    desc: 'Web3 marketplace ensuring fair pay for content creators based on actual performance. Built with React, Node.js, blockchain, and Google Cloud Video Intelligence API in 48 hours at Junction 2022.',
+    url: 'https://github.com/Hasankc',
+    topics: ['react', 'web3', 'nodejs', 'blockchain', 'google-cloud'],
+    lang: 'TypeScript',
+    award: '🏆 Junction 2022 — 2nd Place',
   },
   {
-    name:        'TinBike',
-    description: 'Mobile app concept for motorcyclists — think Tinder but for finding riding buddies. Shows nearby riders on a map and lets you organise group rides. Built with React Native and MongoDB.',
-    html_url:    'https://github.com/Hasankc',
-    homepage:    null as string | null,
-    topics:      ['react-native', 'nodejs', 'mongodb', 'mobile'],
-    language:    'JavaScript',
-    award:       null as string | null,
+    id: 'tinbike',
+    name: 'TinBike',
+    desc: 'Mobile app concept for motorcyclists — connects nearby riders on a map and enables group rides. Think Tinder, but for finding riding buddies.',
+    url: 'https://github.com/Hasankc',
+    topics: ['react-native', 'nodejs', 'mongodb', 'mobile'],
+    lang: 'JavaScript',
+    award: null,
   },
 ];
 
-// GitHub uses these colours for language dots — keeping them consistent
-// with what people see on the actual GitHub profile
-const languageColors: Record<string, string> = {
-  TypeScript: '#3178c6',
-  JavaScript: '#f7df1e',
-  Python:     '#3572A5',
-  Vue:        '#41b883',
-  HTML:       '#e34c26',
-  CSS:        '#563d7c',
-  Rust:       '#dea584',
-  Go:         '#00ADD8',
+const LANG_COLORS: Record<string, string> = {
+  TypeScript: '#3178c6', JavaScript: '#f7df1e', Python: '#3572A5',
+  Vue: '#41b883', HTML: '#e34c26', CSS: '#563d7c',
 };
 
 export function Projects() {
-  const [repos,   setRepos]   = useState<GitHubRepo[]>([]);
+  const [repos,   setRepos]   = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(false);
-  const [filter,  setFilter]  = useState<string>('all');
-  const sectionRef = useRef<HTMLElement>(null);
+  const [filter,  setFilter]  = useState('all');
+  const ref = useRef<HTMLElement>(null);
 
-  const fetchRepos = async () => {
-    setLoading(true);
-    setError(false);
+  const load = async () => {
+    setLoading(true); setError(false);
     try {
-      const res = await fetch(
-        'https://api.github.com/users/Hasankc/repos?sort=updated&per_page=12',
-        { headers: { Accept: 'application/vnd.github.v3+json' } },
-      );
-      if (!res.ok) throw new Error(`GitHub API responded with ${res.status}`);
-      const data: GitHubRepo[] = await res.json();
-      // filter out forks — only show original work
-      setRepos(data.filter((r) => !r.fork).slice(0, 9));
-    } catch (err) {
-      console.error('Failed to load GitHub repos:', err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
+      const r = await fetch('https://api.github.com/users/Hasankc/repos?sort=updated&per_page=12', {
+        headers: { Accept: 'application/vnd.github.v3+json' },
+      });
+      if (!r.ok) throw new Error('');
+      const d: Repo[] = await r.json();
+      setRepos(d.filter(x => !x.fork).slice(0, 9));
+    } catch { setError(true); }
+    finally   { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchRepos();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          entries[0].target.querySelectorAll('.reveal').forEach((el, i) => {
-            setTimeout(() => el.classList.add('visible'), i * 80);
-          });
-        }
+    const obs = new IntersectionObserver(
+      es => {
+        if (es[0].isIntersecting)
+          es[0].target.querySelectorAll('.reveal').forEach((el, i) =>
+            setTimeout(() => el.classList.add('in'), i * 70));
       },
-      { threshold: 0.1 },
+      { threshold: 0.05 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
-  // build language filter options from whatever the API returned
-  const languages = [
-    'all',
-    ...Array.from(new Set(repos.map((r) => r.language).filter(Boolean) as string[])),
-  ];
-
-  const filtered =
-    filter === 'all' ? repos : repos.filter((r) => r.language === filter);
+  const langs = ['all', ...Array.from(new Set(repos.map(r => r.language).filter(Boolean) as string[]))];
+  const shown = filter === 'all' ? repos : repos.filter(r => r.language === filter);
 
   return (
-    <section id="projects" ref={sectionRef} className="section-padding">
-      <div className="max-w-7xl mx-auto">
+    /* id="projects" — scroll target */
+    <section
+      id="projects"
+      ref={ref}
+      data-section="projects"
+      data-testid="projects-section"
+      className="sec sec-alt"
+    >
+      <div id="projects-inner" className="wrap">
 
-        <div className="text-center mb-16 reveal">
-          <p
-            className="text-[var(--accent)] text-sm mb-3 tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            // projects
-          </p>
-          <h2 className="section-title">
-            Things I&apos;ve <span className="gradient-text">Built</span>
+        {/* id="projects-header" */}
+        <div id="projects-header" className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
+          <p id="projects-label" className="label" style={{ marginBottom: 10 }}>// projects</p>
+          <h2 id="projects-heading" className="subhead">
+            Things I&apos;ve <span id="projects-heading-grad" className="grad" style={{ paddingRight: 4 }}>Built</span>
           </h2>
-          <p className="text-[var(--text-secondary)] mt-4 max-w-lg mx-auto">
-            A mix of hackathon projects, side projects, and things I built to solve
-            actual problems. More on GitHub.
+          <p id="projects-subtext" style={{ color: 'var(--text2)', marginTop: 10, fontSize: 15 }}>
+            Hackathon projects, side work, and professional builds.
           </p>
         </div>
 
-        {/* featured projects — always visible at the top */}
-        <div className="grid md:grid-cols-2 gap-6 mb-14">
-          {featured.map((proj, i) => (
+        {/* id="projects-featured" — always-visible highlight cards */}
+        <div
+          id="projects-featured"
+          data-testid="projects-featured"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18, marginBottom: 48 }}
+        >
+          {FEATURED.map((p, i) => (
             <div
-              key={proj.name}
-              className="reveal gradient-border glass-card p-6 space-y-4"
-              style={{ transitionDelay: `${i * 80}ms` }}
+              key={p.id}
+              id={`project-featured-${p.id}`}
+              data-testid={`project-featured-${p.id}`}
+              data-project-name={p.name}
+              className="reveal gborder card"
+              style={{ padding: 26, transitionDelay: `${i * 80}ms`, position: 'relative', overflow: 'hidden' }}
             >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                      {proj.name}
-                    </h3>
-                    {proj.award && (
-                      <span
-                        className="text-xs px-2.5 py-1 rounded-full"
-                        style={{
-                          background: 'rgba(251,191,36,0.12)',
-                          color:      '#fbbf24',
-                          border:     '1px solid rgba(251,191,36,0.25)',
-                        }}
-                      >
-                        {proj.award}
+              <div id={`project-featured-${p.id}-header`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <h3 id={`project-featured-${p.id}-name`} style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--text1)' }}>{p.name}</h3>
+                    {p.award && (
+                      <span id={`project-featured-${p.id}-award`} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 20, background: 'rgba(217,119,6,.1)', color: '#d97706', border: '1px solid rgba(217,119,6,.25)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                        {p.award}
                       </span>
                     )}
                   </div>
-                  {proj.language && (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ background: languageColors[proj.language] ?? '#888' }}
-                      />
-                      <span className="text-xs text-[var(--text-muted)]">{proj.language}</span>
+                  {p.lang && (
+                    <div id={`project-featured-${p.id}-lang`} style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: LANG_COLORS[p.lang] ?? '#888', flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: 'var(--text3)' }}>{p.lang}</span>
                     </div>
                   )}
                 </div>
                 <a
-                  href={proj.html_url}
+                  id={`project-featured-${p.id}-github-link`}
+                  href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2 rounded-lg transition-all hover:text-[var(--accent)] text-[var(--text-muted)]"
-                  aria-label={`${proj.name} on GitHub`}
+                  aria-label={`${p.name} on GitHub`}
+                  style={{ color: 'var(--text3)', transition: 'color .2s', flexShrink: 0 }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text3)')}
                 >
-                  <Github size={18} />
+                  <Github size={17} />
                 </a>
               </div>
-
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                {proj.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {proj.topics.map((t) => (
-                  <span key={t} className="tag">{t}</span>
+              <p id={`project-featured-${p.id}-desc`} style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.75, marginBottom: 14 }}>{p.desc}</p>
+              <div id={`project-featured-${p.id}-topics`} style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {p.topics.map(t => (
+                  <span key={t} id={`project-featured-${p.id}-topic-${t}`} className="tag">{t}</span>
                 ))}
               </div>
             </div>
           ))}
         </div>
 
-        {/* live GitHub repos section */}
-        <div className="reveal">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <h3 className="text-xl font-semibold text-[var(--text-primary)]">
-              From GitHub
-              <a
-                href="https://github.com/Hasankc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2 text-sm text-[var(--accent)] hover:underline"
-              >
-                @Hasankc
-              </a>
+        {/* id="projects-github-section" — live GitHub repos */}
+        <div id="projects-github-section" className="reveal">
+
+          {/* id="projects-github-header" — title + language filter */}
+          <div id="projects-github-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+            <h3 id="projects-github-title" style={{ fontSize: 17, fontWeight: 700, color: 'var(--text1)' }}>
+              From GitHub{' '}
+              <a id="projects-github-username" href="https://github.com/Hasankc" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>@Hasankc</a>
             </h3>
 
-            {/* only show the language filter if the API loaded successfully */}
-            {!loading && !error && languages.length > 1 && (
-              <div className="flex flex-wrap gap-2">
-                {languages.map((lang) => (
+            {/* id="projects-lang-filter" — language filter buttons */}
+            {!loading && !error && langs.length > 1 && (
+              <div id="projects-lang-filter" data-testid="projects-lang-filter" style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {langs.map(l => (
                   <button
-                    key={lang}
-                    onClick={() => setFilter(lang)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                    style={
-                      filter === lang
-                        ? { background: 'var(--accent-glow)', color: 'var(--accent)', border: '1px solid var(--border)' }
-                        : { background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-subtle)' }
-                    }
+                    key={l}
+                    id={`projects-filter-${l.toLowerCase()}`}
+                    data-testid={`projects-filter-${l.toLowerCase()}`}
+                    data-active={filter === l}
+                    onClick={() => setFilter(l)}
+                    style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-body)', transition: 'all .2s', fontWeight: 500, background: filter === l ? 'rgba(13,148,136,.1)' : 'var(--card)', color: filter === l ? 'var(--accent)' : 'var(--text2)', border: `1px solid ${filter === l ? 'rgba(13,148,136,.3)' : 'var(--border2)'}` }}
                   >
-                    {lang === 'all' ? 'All' : lang}
+                    {l === 'all' ? 'All' : l}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
+          {/* id="projects-github-loading" */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
+            <div id="projects-github-loading" data-testid="projects-loading" style={{ textAlign: 'center', padding: 56 }}>
+              <Loader2 size={26} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
             </div>
           ) : error ? (
-            // GitHub API occasionally rate-limits unauthenticated requests — just show a retry
-            <div className="glass-card p-8 text-center space-y-4">
-              <p className="text-[var(--text-secondary)]">
-                Couldn&apos;t load repos right now — GitHub might be rate limiting us.
-              </p>
-              <button onClick={fetchRepos} className="btn-secondary inline-flex items-center gap-2">
-                <RefreshCw size={14} /> Try again
+            /* id="projects-github-error" */
+            <div id="projects-github-error" data-testid="projects-error" className="card" style={{ padding: 36, textAlign: 'center' }}>
+              <p id="projects-error-text" style={{ color: 'var(--text2)', marginBottom: 14, fontSize: 14 }}>Couldn&apos;t load GitHub repos right now.</p>
+              <button id="projects-retry-btn" data-testid="projects-retry" onClick={load} className="btn btn-outline" style={{ margin: '0 auto', gap: 6 }}>
+                <RefreshCw size={13} />Retry
               </button>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map((repo, i) => (
+            /* id="projects-github-grid" — the repo cards */
+            <div id="projects-github-grid" data-testid="projects-github-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+              {shown.map((repo, i) => (
+                /* id="project-repo-{name}" — individual repo card */
                 <div
                   key={repo.id}
-                  className="glass-card p-5 space-y-3 reveal"
-                  style={{ transitionDelay: `${i * 60}ms` }}
+                  id={`project-repo-${repo.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                  data-testid={`project-repo-${repo.id}`}
+                  data-repo-name={repo.name}
+                  data-repo-lang={repo.language ?? 'none'}
+                  className="reveal card"
+                  style={{ padding: 18, transitionDelay: `${i * 50}ms` }}
                 >
-                  <div className="flex items-start justify-between">
-                    <h4 className="font-medium text-[var(--text-primary)] leading-tight">
-                      {repo.name}
-                    </h4>
-                    <div className="flex gap-1 shrink-0">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 9 }}>
+                    <h4 id={`repo-${repo.id}-name`} style={{ fontWeight: 600, fontSize: 14, color: 'var(--text1)', lineHeight: 1.3 }}>{repo.name}</h4>
+                    <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
                       {repo.homepage && (
-                        <a
-                          href={repo.homepage}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
-                          aria-label="Live demo"
-                        >
-                          <ExternalLink size={14} />
+                        <a id={`repo-${repo.id}-live`} href={repo.homepage} target="_blank" rel="noopener noreferrer" aria-label="Live demo" style={{ color: 'var(--text3)', transition: 'color .2s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text3)')}>
+                          <ExternalLink size={13} />
                         </a>
                       )}
-                      <a
-                        href={repo.html_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
-                        aria-label="View on GitHub"
-                      >
-                        <Github size={14} />
+                      <a id={`repo-${repo.id}-github`} href={repo.html_url} target="_blank" rel="noopener noreferrer" aria-label={`${repo.name} on GitHub`} style={{ color: 'var(--text3)', transition: 'color .2s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--text3)')}>
+                        <Github size={13} />
                       </a>
                     </div>
                   </div>
-
-                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+                  <p id={`repo-${repo.id}-desc`} style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 10, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {repo.description ?? 'No description.'}
                   </p>
-
                   {repo.topics.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {repo.topics.slice(0, 4).map((t) => (
-                        <span key={t} className="tag text-xs">{t}</span>
+                    <div id={`repo-${repo.id}-topics`} style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
+                      {repo.topics.slice(0, 3).map(t => (
+                        <span key={t} id={`repo-${repo.id}-topic-${t}`} className="tag" style={{ fontSize: 10, padding: '2px 7px' }}>{t}</span>
                       ))}
                     </div>
                   )}
-
-                  <div className="flex items-center gap-4 pt-1">
+                  <div id={`repo-${repo.id}-meta`} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     {repo.language && (
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ background: languageColors[repo.language] ?? '#888' }}
-                        />
-                        <span className="text-xs text-[var(--text-muted)]">{repo.language}</span>
+                      <div id={`repo-${repo.id}-lang`} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: LANG_COLORS[repo.language] ?? '#888' }} />
+                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>{repo.language}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                      <Star size={11} /><span>{repo.stargazers_count}</span>
+                    <div id={`repo-${repo.id}-stars`} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--text3)' }}>
+                      <Star size={10} />{repo.stargazers_count}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                      <GitFork size={11} /><span>{repo.forks_count}</span>
+                    <div id={`repo-${repo.id}-forks`} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--text3)' }}>
+                      <GitFork size={10} />{repo.forks_count}
                     </div>
                   </div>
                 </div>
@@ -309,17 +247,20 @@ export function Projects() {
             </div>
           )}
 
-          <div className="text-center mt-10">
+          {/* id="projects-see-all" — link to full GitHub profile */}
+          <div id="projects-see-all" style={{ textAlign: 'center', marginTop: 28 }}>
             <a
+              id="projects-see-all-link"
+              data-testid="projects-see-all"
               href="https://github.com/Hasankc?tab=repositories"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-secondary inline-flex items-center gap-2"
+              className="btn btn-outline"
             >
-              <Github size={15} />
-              See all 31 repos
+              <Github size={14} />See all repositories
             </a>
           </div>
+
         </div>
       </div>
     </section>

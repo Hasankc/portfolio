@@ -1,0 +1,2 @@
+Add your CV here as: Alhasan_Alqaysi_CV.pdf
+The Resume button in the navbar links to /Alhasan_Alqaysi_CV.pdf

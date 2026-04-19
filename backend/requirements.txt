@@ -3,9 +3,16 @@ uvicorn[standard]==0.30.1
 python-dotenv==1.0.1
 pydantic==2.8.2
 email-validator==2.2.0
+
+# free AI — groq.com (no credit card)
 groq==0.9.0
+
+# free email — resend.com (no credit card)
 resend==2.2.0
+
+# html sanitisation
 bleach==6.1.0
+
 httpx==0.27.0
 
 # NOTE: slowapi removed — we use a simple built-in rate limiter instead

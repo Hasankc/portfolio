@@ -1,10 +1,9 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
-import { Sun, Moon, Menu, X, Code2 } from 'lucide-react';
+import { Sun, Moon, Menu, X, Download } from 'lucide-react';
 
-const navLinks = [
+const NAV = [
   { href: '#about',      label: 'About'      },
   { href: '#skills',     label: 'Skills'     },
   { href: '#experience', label: 'Experience' },
@@ -14,127 +13,204 @@ const navLinks = [
 ];
 
 export function Navbar() {
-  const { theme, toggleTheme } = useTheme();
-  const [scrolled,    setScrolled]    = useState(false);
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [activeHref,  setActiveHref]  = useState('');
+  const { theme, toggle } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const [open,     setOpen]     = useState(false);
+  const [active,   setActive]   = useState('');
 
-  // add a bit of blur/border to the nav once the user scrolls past the hero
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // highlight whichever section is currently in view
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveHref(`#${entry.target.id}`);
-        });
-      },
-      { threshold: 0.5 },
+    const obs = new IntersectionObserver(
+      es => es.forEach(e => { if (e.isIntersecting) setActive('#' + e.target.id); }),
+      { threshold: 0.45, rootMargin: '-60px 0px 0px 0px' }
     );
-    navLinks.forEach(({ href }) => {
+    NAV.forEach(({ href }) => {
       const el = document.querySelector(href);
-      if (el) observer.observe(el);
+      if (el) obs.observe(el);
     });
-    return () => observer.disconnect();
+    return () => obs.disconnect();
   }, []);
 
-  return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? 'glass border-b' : 'bg-transparent'
-      }`}
-      style={{ borderColor: scrolled ? 'var(--border)' : 'transparent' }}
-    >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+  const navBg = scrolled
+    ? theme === 'dark' ? 'rgba(10,15,14,0.92)' : 'rgba(245,240,235,0.92)'
+    : 'transparent';
 
-        {/* logo — clicking takes you back to the top */}
+  return (
+    /* id="navbar" — top-level nav element */
+    <header
+      id="navbar"
+      data-component="navbar"
+      data-scrolled={scrolled}
+      role="banner"
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+        transition: 'background .35s, box-shadow .35s, backdrop-filter .35s',
+        background: navBg,
+        backdropFilter: scrolled ? 'blur(18px)' : 'none',
+        WebkitBackdropFilter: scrolled ? 'blur(18px)' : 'none',
+        boxShadow: scrolled ? '0 1px 0 var(--border2)' : 'none',
+      }}
+    >
+      <div
+        id="navbar-inner"
+        className="wrap"
+        style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}
+      >
+        {/* id="navbar-logo" — click to go back to top */}
         <a
+          id="navbar-logo"
+          data-testid="navbar-logo"
           href="#"
-          className="flex items-center gap-2 text-[var(--accent)] font-bold text-lg tracking-tight"
-          style={{ fontFamily: 'var(--font-mono)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}
         >
-          <Code2 size={20} />
-          <span>Alhasan</span>
+          <div
+            id="navbar-logo-icon"
+            style={{
+              width: 32, height: 32, borderRadius: 9, background: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, flexShrink: 0,
+            }}
+          >
+            A
+          </div>
+          <span
+            id="navbar-logo-text"
+            style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, color: 'var(--text1)', letterSpacing: '-.02em' }}
+          >
+            Alhasan
+          </span>
         </a>
 
-        {/* desktop nav links */}
-        <div className="hidden md:flex items-center gap-1">
-          {navLinks.map(({ href, label }) => (
+        {/* id="navbar-links" — desktop navigation links */}
+        <nav
+          id="navbar-links"
+          data-testid="navbar-links"
+          style={{ display: 'flex', gap: 2, alignItems: 'center' }}
+          className="hidden md:flex"
+          aria-label="Main navigation"
+        >
+          {NAV.map(({ href, label }) => (
             <a
               key={href}
+              id={`nav-link-${label.toLowerCase().replace(' ', '-')}`}
+              data-nav-href={href}
+              data-active={active === href}
               href={href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeHref === href
-                  ? 'text-[var(--accent)] bg-[var(--accent-glow)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
+              style={{
+                padding: '6px 13px', borderRadius: 8, fontSize: 14, fontWeight: 500,
+                textDecoration: 'none', transition: 'all .2s',
+                color: active === href ? 'var(--accent)' : 'var(--text2)',
+                background: active === href ? 'rgba(13,148,136,.1)' : 'transparent',
+              }}
             >
               {label}
             </a>
           ))}
-        </div>
+        </nav>
 
-        <div className="flex items-center gap-3">
-          {/* dark/light toggle */}
+        {/* id="navbar-actions" — theme toggle + resume button */}
+        <div
+          id="navbar-actions"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
+        >
+          {/* id="navbar-theme-toggle" — light/dark switcher */}
           <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg transition-all hover:bg-[var(--accent-glow)] text-[var(--text-secondary)] hover:text-[var(--accent)]"
-            aria-label="Toggle theme"
+            id="navbar-theme-toggle"
+            data-testid="navbar-theme-toggle"
+            data-current-theme={theme}
+            onClick={toggle}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+              width: 36, height: 36, borderRadius: 9, background: 'transparent',
+              border: '1px solid var(--border2)', color: 'var(--text2)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all .2s', flexShrink: 0,
+            }}
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
-          {/* CV download — hidden on mobile, too cramped */}
+          {/* id="navbar-resume-btn" — downloads the CV PDF */}
           <a
+            id="navbar-resume-btn"
+            data-testid="navbar-resume-btn"
             href="/Alhasan_Alqaysi_CV.pdf"
-            download
-            className="hidden md:inline-flex btn-primary text-sm"
+            download="Alhasan_Al-Qaysi_CV.pdf"
+            className="btn btn-primary hidden md:inline-flex"
+            style={{ padding: '8px 16px', fontSize: 13, gap: 6 }}
           >
+            <Download size={13} />
             Resume
           </a>
 
-          {/* hamburger for mobile */}
+          {/* id="navbar-mobile-toggle" — opens/closes the mobile menu */}
           <button
-            className="md:hidden p-2 rounded-lg text-[var(--text-secondary)]"
-            onClick={() => setMobileOpen((v) => !v)}
+            id="navbar-mobile-toggle"
+            data-testid="navbar-mobile-toggle"
+            className="md:hidden"
+            onClick={() => setOpen(v => !v)}
             aria-label="Toggle mobile menu"
-            aria-expanded={mobileOpen}
+            aria-expanded={open}
+            aria-controls="navbar-mobile-menu"
+            style={{
+              width: 36, height: 36, borderRadius: 9, background: 'transparent',
+              border: '1px solid var(--border2)', color: 'var(--text2)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {open ? <X size={17} /> : <Menu size={17} />}
           </button>
         </div>
       </div>
 
-      {/* mobile dropdown menu */}
-      {mobileOpen && (
-        <div className="md:hidden glass border-t" style={{ borderColor: 'var(--border)' }}>
-          <div className="px-6 py-4 flex flex-col gap-1">
-            {navLinks.map(({ href, label }) => (
+      {/* id="navbar-mobile-menu" — dropdown on small screens */}
+      {open && (
+        <div
+          id="navbar-mobile-menu"
+          data-testid="navbar-mobile-menu"
+          data-open={open}
+          style={{
+            borderTop: '1px solid var(--border2)',
+            background: theme === 'dark' ? 'rgba(10,15,14,.97)' : 'rgba(245,240,235,.97)',
+            backdropFilter: 'blur(18px)',
+          }}
+        >
+          <div
+            id="navbar-mobile-links"
+            className="wrap"
+            style={{ paddingTop: 12, paddingBottom: 16, display: 'flex', flexDirection: 'column', gap: 2 }}
+          >
+            {NAV.map(({ href, label }) => (
               <a
                 key={href}
+                id={`nav-mobile-link-${label.toLowerCase().replace(' ', '-')}`}
                 href={href}
-                onClick={() => setMobileOpen(false)}
-                className="px-4 py-3 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--accent-glow)] transition-all"
+                onClick={() => setOpen(false)}
+                style={{ padding: '10px 12px', borderRadius: 8, fontSize: 15, fontWeight: 500, color: 'var(--text2)', textDecoration: 'none', transition: 'all .2s' }}
               >
                 {label}
               </a>
             ))}
+            {/* id="navbar-mobile-resume" — resume download inside mobile menu */}
             <a
+              id="navbar-mobile-resume"
               href="/Alhasan_Alqaysi_CV.pdf"
-              download
-              className="mt-2 btn-primary text-sm text-center"
-              onClick={() => setMobileOpen(false)}
+              download="Alhasan_Al-Qaysi_CV.pdf"
+              className="btn btn-primary"
+              style={{ marginTop: 10, justifyContent: 'center', gap: 6 }}
+              onClick={() => setOpen(false)}
             >
+              <Download size={14} />
               Download Resume
             </a>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

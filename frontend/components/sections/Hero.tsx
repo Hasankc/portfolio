@@ -1,13 +1,10 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Github, Linkedin, Mail, ArrowDown, MapPin, ExternalLink } from 'lucide-react';
+import { Github, Linkedin, Mail, ArrowDown, MapPin, Download } from 'lucide-react';
 
-// these are the roles that cycle in the typewriter — tweak the order/wording
-// to whatever feels most accurate for what you're applying to
-const roles = [
-  'Full-Stack Web Developer',
+const ROLES = [
+  'Full-Stack Developer',
   'React & TypeScript Engineer',
   'Vue.js Specialist',
   'Node.js Developer',
@@ -15,199 +12,309 @@ const roles = [
 ];
 
 export function Hero() {
-  const [roleIndex, setRoleIndex] = useState(0);
-  const [displayed, setDisplayed]  = useState('');
-  const [deleting, setDeleting]    = useState(false);
+  const [roleIdx,  setRoleIdx]  = useState(0);
+  const [text,     setText]     = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const timer = useRef<NodeJS.Timeout>();
 
-  // ref instead of state for the timeout id — no need to trigger re-renders for this
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
+  // typewriter effect — cycles through ROLES array
   useEffect(() => {
-    const current = roles[roleIndex];
-
-    if (!deleting && displayed.length < current.length) {
-      // still typing forward — 60ms per char feels natural without being too slow
-      timeoutRef.current = setTimeout(
-        () => setDisplayed(current.slice(0, displayed.length + 1)),
-        60,
-      );
-    } else if (!deleting && displayed.length === current.length) {
-      // hold for 2 seconds so people can actually read it before we delete
-      timeoutRef.current = setTimeout(() => setDeleting(true), 2000);
-    } else if (deleting && displayed.length > 0) {
-      // deleting is faster (30ms) — looks snappier going back than typing forward
-      timeoutRef.current = setTimeout(
-        () => setDisplayed(displayed.slice(0, -1)),
-        30,
-      );
+    const cur = ROLES[roleIdx];
+    if (!deleting && text.length < cur.length) {
+      timer.current = setTimeout(() => setText(cur.slice(0, text.length + 1)), 65);
+    } else if (!deleting && text.length === cur.length) {
+      timer.current = setTimeout(() => setDeleting(true), 2400);
+    } else if (deleting && text.length > 0) {
+      timer.current = setTimeout(() => setText(t => t.slice(0, -1)), 32);
     } else {
-      // finished deleting — move to next role and start again
       setDeleting(false);
-      setRoleIndex((i) => (i + 1) % roles.length);
+      setRoleIdx(i => (i + 1) % ROLES.length);
     }
-
-    return () => clearTimeout(timeoutRef.current);
-  }, [displayed, deleting, roleIndex]);
+    return () => clearTimeout(timer.current);
+  }, [text, deleting, roleIdx]);
 
   return (
+    /* id="hero" — scroll target + section anchor */
     <section
       id="hero"
-      className="relative min-h-screen flex items-center justify-center section-padding pt-24"
+      data-section="hero"
+      data-testid="hero-section"
+      className="hero-bg"
+      style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: 80, paddingBottom: 60 }}
     >
-      {/* background glow orbs — decorative only, pointer-events off */}
-      <div
-        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%)' }}
-      />
-      <div
-        className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%)' }}
-      />
+      <div id="hero-inner" className="wrap" style={{ width: '100%' }}>
+        <div
+          id="hero-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '56px 72px',
+            alignItems: 'center',
+          }}
+        >
 
-      <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
+          {/* ── LEFT: text content ── */}
+          <div id="hero-text" data-testid="hero-text" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-        {/* text content — order-2 on mobile so photo shows first on small screens */}
-        <div className="space-y-8 order-2 lg:order-1">
-
-          {/* availability pill — remember to update this when you land a job lol */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm">
-            <span className="glow-dot" />
-            <span className="text-[var(--text-secondary)]">Available for opportunities</span>
-          </div>
-
-          <div>
-            <p
-              className="text-[var(--accent)] text-lg mb-3 font-medium"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              Hello, I&apos;m
-            </p>
-            <h1 className="section-title mb-4">
-              Alhasan{' '}
-              <span className="gradient-text">Al-Qaysi</span>
-            </h1>
-
-            {/* typewriter output — min-h stops layout from jumping when string is empty */}
-            <div className="flex items-center gap-2 text-xl text-[var(--text-secondary)] font-light min-h-[2rem]">
-              <span>{displayed}</span>
-              <span
-                className="inline-block w-0.5 h-6 animate-pulse"
-                style={{ background: 'var(--accent)' }}
-              />
-            </div>
-          </div>
-
-          <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-lg">
-            Full-stack developer with 5+ years building web apps in Helsinki. I care about
-            fast, accessible products — from pixel-perfect UIs to the APIs behind them.
-          </p>
-
-          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
-            <MapPin size={14} className="text-[var(--accent)]" />
-            <span>Helsinki, Finland</span>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-            <a href="#contact" className="btn-primary">Get in Touch</a>
-            <a href="#projects" className="btn-secondary">
-              <span className="flex items-center gap-2">
-                View Projects <ExternalLink size={14} />
-              </span>
-            </a>
-          </div>
-
-          {/* socials + phone number */}
-          <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/Hasankc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-xl glass transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] text-[var(--text-secondary)]"
-              aria-label="GitHub profile"
-            >
-              <Github size={18} />
-            </a>
-            <a
-              href="mailto:alhasanal_qaysi@yahoo.com"
-              className="p-2.5 rounded-xl glass transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] text-[var(--text-secondary)]"
-              aria-label="Send email"
-            >
-              <Mail size={18} />
-            </a>
-            <a
-              href="https://linkedin.com/in/alhasan-al-qaysi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 rounded-xl glass transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] text-[var(--text-secondary)]"
-              aria-label="LinkedIn profile"
-            >
-              <Linkedin size={18} />
-            </a>
-
-            <div className="w-px h-6 bg-[var(--border)] mx-2" />
-            <span className="text-xs text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-mono)' }}>
-              +358 45 113 9969
-            </span>
-          </div>
-        </div>
-
-        {/* photo column */}
-        <div className="flex justify-center order-1 lg:order-2">
-          <div className="relative">
-
-            {/* pulsing glow ring behind the photo */}
+            {/* id="hero-availability-badge" — the "open to work" pill */}
             <div
-              className="absolute inset-0 rounded-full blur-2xl opacity-30 animate-pulse-slow"
-              style={{ background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)' }}
-            />
-
-            {/* profile photo — 320x320, circular, floats up and down */}
-            <div
-              className="relative rounded-full overflow-hidden animate-float"
+              id="hero-availability-badge"
+              data-testid="hero-availability"
               style={{
-                width: '320px',
-                height: '320px',
-                border: '2px solid var(--border)',
-                boxShadow: '0 0 60px var(--accent-glow)',
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: 'rgba(13,148,136,.08)', border: '1px solid rgba(13,148,136,.2)',
+                borderRadius: 20, padding: '6px 14px', width: 'fit-content',
               }}
             >
-              <Image
-                src="/profile.jpg"
-                alt="Alhasan Al-Qaysi"
-                fill
-                className="object-cover object-top"
-                priority
-              />
+              <span id="hero-availability-dot" className="dot" style={{ width: 7, height: 7 }} />
+              <span
+                id="hero-availability-text"
+                style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', fontFamily: 'var(--font-mono)', letterSpacing: '.04em' }}
+              >
+                OPEN TO OPPORTUNITIES
+              </span>
             </div>
 
-            {/* floating stat chips — update numbers as they change */}
-            <div
-              className="absolute -bottom-4 -left-8 glass rounded-xl px-4 py-2.5 text-sm font-medium shadow-xl"
-              style={{ border: '1px solid var(--border)' }}
-            >
-              <span className="text-[var(--accent)]" style={{ fontFamily: 'var(--font-mono)' }}>5+</span>
-              <span className="text-[var(--text-secondary)] ml-1">years exp.</span>
+            {/* id="hero-name-block" — greeting + full name + typewriter */}
+            <div id="hero-name-block">
+              <p id="hero-greeting" className="label" style={{ marginBottom: 10 }}>Hello, I&apos;m</p>
+
+              {/* id="hero-name" — the actual name heading */}
+              <h1
+                id="hero-name"
+                data-testid="hero-name"
+                className="headline"
+              >
+                Alhasan{' '}
+                {/*
+                  id="hero-name-gradient" — the "Al-Qaysi" part with gradient.
+                  FIX: display:inline-block + paddingRight stops the gradient
+                  from clipping the last letter of the name.
+                */}
+                <span
+                  id="hero-name-gradient"
+                  className="grad"
+                  style={{ display: 'inline-block', paddingRight: 6 }}
+                >
+                  Al-Qaysi
+                </span>
+              </h1>
+
+              {/* id="hero-typewriter" — animated role text */}
+              <div
+                id="hero-typewriter"
+                data-testid="hero-typewriter"
+                data-current-role={ROLES[roleIdx]}
+                style={{ marginTop: 14, minHeight: 34, display: 'flex', alignItems: 'center', gap: 4 }}
+              >
+                <span id="hero-typewriter-text" style={{ fontSize: 20, fontWeight: 300, color: 'var(--text2)' }}>
+                  {text}
+                </span>
+                {/* id="hero-cursor" — blinking cursor */}
+                <span
+                  id="hero-cursor"
+                  style={{ width: 2, height: 24, background: 'var(--accent)', display: 'inline-block', animation: 'pulse-dot .9s ease-in-out infinite', flexShrink: 0 }}
+                />
+              </div>
             </div>
-            <div
-              className="absolute -top-4 -right-8 glass rounded-xl px-4 py-2.5 text-sm font-medium shadow-xl"
-              style={{ border: '1px solid var(--border)' }}
+
+            {/* id="hero-bio" — short intro paragraph */}
+            <p
+              id="hero-bio"
+              data-testid="hero-bio"
+              style={{ fontSize: 16, color: 'var(--text2)', lineHeight: 1.8, maxWidth: 480 }}
             >
-              <span className="text-[var(--accent)]" style={{ fontFamily: 'var(--font-mono)' }}>20+</span>
-              <span className="text-[var(--text-secondary)] ml-1">bugs squashed</span>
+              Full-stack developer with{' '}
+              <strong id="hero-bio-years" style={{ color: 'var(--text1)', fontWeight: 600 }}>5+ years</strong>
+              {' '}building web applications in Helsinki. I craft fast, accessible, and beautiful
+              products — from pixel-perfect UIs to robust APIs.
+            </p>
+
+            {/* id="hero-location" — location badge */}
+            <div
+              id="hero-location"
+              data-testid="hero-location"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text3)', fontSize: 13 }}
+            >
+              <MapPin id="hero-location-icon" size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+              <span id="hero-location-text">Helsinki, Finland</span>
+            </div>
+
+            {/* id="hero-cta-buttons" — primary action buttons */}
+            <div
+              id="hero-cta-buttons"
+              data-testid="hero-cta-buttons"
+              style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}
+            >
+              <a id="hero-cta-contact" data-testid="hero-cta-contact" href="#contact" className="btn btn-primary">
+                Get in Touch
+              </a>
+              <a id="hero-cta-projects" data-testid="hero-cta-projects" href="#projects" className="btn btn-outline">
+                View Projects
+              </a>
+            </div>
+
+            {/* id="hero-socials" — social links row */}
+            <div
+              id="hero-socials"
+              data-testid="hero-socials"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+            >
+              <a
+                id="hero-social-github"
+                data-testid="hero-social-github"
+                href="https://github.com/Hasankc"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub profile"
+                style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', textDecoration: 'none', transition: 'all .2s', background: 'var(--card)' }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent)'; el.style.background = 'rgba(13,148,136,.08)'; }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border2)'; el.style.color = 'var(--text2)'; el.style.background = 'var(--card)'; }}
+              >
+                <Github size={16} />
+              </a>
+              <a
+                id="hero-social-email"
+                data-testid="hero-social-email"
+                href="mailto:alhasanal_qaysi@yahoo.com"
+                aria-label="Send email"
+                style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', textDecoration: 'none', transition: 'all .2s', background: 'var(--card)' }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent)'; el.style.background = 'rgba(13,148,136,.08)'; }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border2)'; el.style.color = 'var(--text2)'; el.style.background = 'var(--card)'; }}
+              >
+                <Mail size={16} />
+              </a>
+              <a
+                id="hero-social-linkedin"
+                data-testid="hero-social-linkedin"
+                href="https://linkedin.com/in/alhasan-al-qaysi"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn profile"
+                style={{ width: 38, height: 38, borderRadius: 9, border: '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', textDecoration: 'none', transition: 'all .2s', background: 'var(--card)' }}
+                onMouseEnter={e => { const el = e.currentTarget; el.style.borderColor = 'var(--accent)'; el.style.color = 'var(--accent)'; el.style.background = 'rgba(13,148,136,.08)'; }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.borderColor = 'var(--border2)'; el.style.color = 'var(--text2)'; el.style.background = 'var(--card)'; }}
+              >
+                <Linkedin size={16} />
+              </a>
+
+              <div id="hero-socials-divider" style={{ width: 1, height: 18, background: 'var(--border2)', margin: '0 2px' }} />
+              <span
+                id="hero-phone"
+                data-testid="hero-phone"
+                style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}
+              >
+                +358 45 113 9969
+              </span>
+            </div>
+          </div>
+
+          {/* ── RIGHT: photo column ── */}
+          <div id="hero-photo-col" style={{ display: 'flex', justifyContent: 'center' }}>
+            {/* id="hero-photo-wrapper" — contains photo + glow + stat badges */}
+            <div id="hero-photo-wrapper" style={{ position: 'relative' }}>
+
+              {/* id="hero-photo-glow" — pulsing glow behind the photo */}
+              <div
+                id="hero-photo-glow"
+                style={{
+                  position: 'absolute', inset: -16, borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(13,148,136,.12) 0%, transparent 70%)',
+                  animation: 'float 5s ease-in-out infinite', pointerEvents: 'none',
+                }}
+              />
+
+              {/* id="hero-photo-frame" — the circular photo container */}
+              <div
+                id="hero-photo-frame"
+                data-testid="hero-photo-frame"
+                data-img-error={imgError}
+                className="float"
+                style={{
+                  width: 300, height: 300, borderRadius: '50%', overflow: 'hidden',
+                  position: 'relative',
+                  border: '3px solid rgba(13,148,136,.25)',
+                  boxShadow: '0 8px 48px rgba(13,148,136,.14), 0 2px 8px rgba(0,0,0,.08)',
+                  background: imgError
+                    ? 'linear-gradient(135deg, var(--accent), var(--accent2))'
+                    : 'var(--bg3)',
+                }}
+              >
+                {!imgError ? (
+                  /* id="hero-photo-img" — the actual profile image */
+                  <Image
+                    id="hero-photo-img"
+                    src="/profile.jpg"
+                    alt="Alhasan Al-Qaysi — Full-Stack Web Developer"
+                    fill
+                    sizes="300px"
+                    style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                    priority
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  /* id="hero-photo-fallback" — shows initials if photo fails to load */
+                  <div
+                    id="hero-photo-fallback"
+                    data-testid="hero-photo-fallback"
+                    style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 72, color: '#fff' }}>AQ</span>
+                  </div>
+                )}
+              </div>
+
+              {/* id="hero-badge-years" — "5+ yrs exp." floating chip */}
+              <div
+                id="hero-badge-years"
+                data-testid="hero-badge-years"
+                style={{
+                  position: 'absolute', bottom: -10, left: -28,
+                  background: 'var(--card)', border: '1px solid var(--border2)',
+                  borderRadius: 12, padding: '10px 16px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,.08)',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <span id="hero-badge-years-value" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: 'var(--accent)', lineHeight: 1 }}>5+</span>
+                <span id="hero-badge-years-label" style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 500 }}>yrs exp.</span>
+              </div>
+
+              {/* id="hero-badge-orgs" — "1K+ orgs" floating chip */}
+              <div
+                id="hero-badge-orgs"
+                data-testid="hero-badge-orgs"
+                style={{
+                  position: 'absolute', top: -10, right: -28,
+                  background: 'var(--card)', border: '1px solid var(--border2)',
+                  borderRadius: 12, padding: '10px 16px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,.08)',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <span id="hero-badge-orgs-value" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: 'var(--accent3)', lineHeight: 1 }}>1K+</span>
+                <span id="hero-badge-orgs-label" style={{ fontSize: 12, color: 'var(--text2)', fontWeight: 500 }}>orgs.</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* scroll nudge at the bottom */}
-      <a
-        href="#about"
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
-        aria-label="Scroll to about section"
-      >
-        <span className="text-xs" style={{ fontFamily: 'var(--font-mono)' }}>scroll</span>
-        <ArrowDown size={16} className="animate-bounce" />
-      </a>
+        {/* id="hero-scroll-cue" — bouncing arrow at the bottom */}
+        <div id="hero-scroll-cue" style={{ textAlign: 'center', marginTop: 64 }}>
+          <a
+            id="hero-scroll-link"
+            href="#about"
+            aria-label="Scroll to about section"
+            style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 7, color: 'var(--text3)', textDecoration: 'none', transition: 'color .2s' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text3)')}
+          >
+            <span id="hero-scroll-label" style={{ fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '.15em', textTransform: 'uppercase' }}>Scroll</span>
+            <ArrowDown id="hero-scroll-arrow" size={15} style={{ animation: 'float 2s ease-in-out infinite' }} />
+          </a>
+        </div>
+      </div>
     </section>
   );
 }

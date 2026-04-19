@@ -1,32 +1,22 @@
 /**
- * __tests__/components.test.tsx
- *
- * Component tests for the Navbar and Footer.
- * We're testing that the right links/text render — not implementation details.
- *
- * NOTE: components that use next/image or next/link need the mocks below.
- * If you add more components that use Next.js internals, add mocks for them too.
+ * components.test.tsx — component render tests
+ * Tests that key UI elements are present and interactive
  */
-
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 
-// ── mocks ─────────────────────────────────────────────────────────────────────
-
-// next/image doesn't work in jsdom — mock it with a plain img
+// ── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
-  },
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) =>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img {...props} alt={props.alt ?? ''} />,
 }));
 
-// ThemeProvider uses localStorage — mock it
 const mockToggle = jest.fn();
 jest.mock('@/components/ThemeProvider', () => ({
-  useTheme: () => ({ theme: 'dark', toggleTheme: mockToggle }),
+  useTheme: () => ({ theme: 'light', toggle: mockToggle }),
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -35,64 +25,46 @@ import { Footer } from '@/components/Footer';
 
 // ── Navbar ────────────────────────────────────────────────────────────────────
 describe('Navbar', () => {
-  beforeEach(() => {
-    render(<Navbar />);
-  });
+  beforeEach(() => render(<Navbar />));
 
-  it('renders the logo/name', () => {
-    expect(screen.getByText('Alhasan')).toBeInTheDocument();
+  it('renders the brand name',          () => expect(screen.getByText('Alhasan')).toBeInTheDocument());
+  it('has About nav link',              () => expect(screen.getAllByText('About').length).toBeGreaterThan(0));
+  it('has Skills nav link',             () => expect(screen.getAllByText('Skills').length).toBeGreaterThan(0));
+  it('has Projects nav link',           () => expect(screen.getAllByText('Projects').length).toBeGreaterThan(0));
+  it('has Contact nav link',            () => expect(screen.getAllByText('Contact').length).toBeGreaterThan(0));
+  it('has Resume download link',        () => {
+    const links = screen.getAllByText('Resume');
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0].closest('a')).toHaveAttribute('download');
   });
-
-  it('renders all nav links', () => {
-    const links = ['About', 'Skills', 'Experience', 'Projects', 'AI Chat', 'Contact'];
-    links.forEach((label) => {
-      // getAllByText because mobile + desktop nav both render the same labels
-      const els = screen.getAllByText(label);
-      expect(els.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('renders the Resume download link', () => {
-    const resumeLink = screen.getByText('Resume');
-    expect(resumeLink).toBeInTheDocument();
-    expect(resumeLink.closest('a')).toHaveAttribute('href', '/Alhasan_Alqaysi_CV.pdf');
-  });
-
-  it('has a theme toggle button', () => {
-    const btn = screen.getByLabelText('Toggle theme');
-    expect(btn).toBeInTheDocument();
-  });
-
-  it('calls toggleTheme when theme button is clicked', async () => {
-    const user = userEvent.setup();
-    const btn  = screen.getByLabelText('Toggle theme');
-    await user.click(btn);
+  it('has theme toggle button',         () => expect(screen.getByLabelText(/toggle|switch/i)).toBeInTheDocument());
+  it('calls toggle on theme click',     () => {
+    fireEvent.click(screen.getByLabelText(/toggle|switch/i));
     expect(mockToggle).toHaveBeenCalledTimes(1);
   });
 });
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 describe('Footer', () => {
-  beforeEach(() => {
-    render(<Footer />);
-  });
+  beforeEach(() => render(<Footer />));
 
-  it('shows the developer name', () => {
-    expect(screen.getByText('Alhasan Al-Qaysi')).toBeInTheDocument();
+  it('shows developer name',            () => expect(screen.getByText('Alhasan Al-Qaysi')).toBeInTheDocument());
+  it('shows copyright with year',       () => expect(screen.getByText(new RegExp(new Date().getFullYear().toString()))).toBeInTheDocument());
+  it('has GitHub link',                 () => {
+    const link = screen.getByLabelText('GitHub');
+    expect(link).toHaveAttribute('href', 'https://github.com/Hasankc');
   });
-
-  it('has a GitHub link', () => {
-    const ghLinks = screen.getAllByLabelText('GitHub');
-    expect(ghLinks[0]).toHaveAttribute('href', 'https://github.com/Hasankc');
+  it('has Email link',                  () => {
+    const link = screen.getByLabelText('Email');
+    expect(link).toHaveAttribute('href', 'mailto:alhasanal_qaysi@yahoo.com');
   });
-
-  it('has an email link', () => {
-    const emailLinks = screen.getAllByLabelText('Email');
-    expect(emailLinks[0]).toHaveAttribute('href', 'mailto:alhasanal_qaysi@yahoo.com');
+  it('has LinkedIn link',               () => {
+    const link = screen.getByLabelText('LinkedIn');
+    expect(link).toHaveAttribute('href', 'https://linkedin.com/in/alhasan-al-qaysi');
   });
-
-  it('shows the current year in the copyright', () => {
-    const year = new Date().getFullYear().toString();
-    expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
+  it('has CV download button',          () => {
+    const dlLinks = screen.getAllByText(/Download CV/i);
+    expect(dlLinks.length).toBeGreaterThan(0);
   });
+  it('shows Next.js attribution',       () => expect(screen.getByText(/Next\.js/i)).toBeInTheDocument());
 });

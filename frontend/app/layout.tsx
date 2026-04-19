@@ -1,94 +1,71 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { Syne, Outfit } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { CursorGlow } from '@/components/CursorGlow';
-import { StarField } from '@/components/StarField';
+
+const syne = Syne({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-body',
+  display: 'swap',
+});
+
+export const viewport: Viewport = {
+  themeColor: '#0d9488',
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Alhasan Al-Qaysi | Full-Stack Web Developer',
   description:
-    'Full-stack web developer based in Helsinki, Finland. Specializing in React, TypeScript, Next.js, Vue.js, Node.js and Python. Building fast, beautiful, and accessible web applications.',
-  keywords: [
-    'full-stack developer',
-    'React',
-    'TypeScript',
-    'Next.js',
-    'Node.js',
-    'Python',
-    'Helsinki',
-    'Finland',
-    'web developer',
-    'Vue.js',
-  ],
+    'Full-stack developer in Helsinki, Finland. 5+ years building fast, accessible web apps with React, TypeScript, Next.js, Vue.js, Node.js and Python.',
+  keywords: ['full-stack developer', 'React', 'TypeScript', 'Next.js', 'Vue.js', 'Helsinki', 'Finland', 'web developer'],
   authors: [{ name: 'Alhasan Al-Qaysi' }],
-  creator: 'Alhasan Al-Qaysi',
   openGraph: {
     type: 'website',
-    locale: 'en_US',
-    url: 'https://hasankc.netlify.app',
     title: 'Alhasan Al-Qaysi | Full-Stack Web Developer',
-    description: 'Full-stack web developer based in Helsinki, Finland.',
-    siteName: 'Alhasan Al-Qaysi Portfolio',
-    images: [
-      {
-        url: '/profile.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Alhasan Al-Qaysi',
-      },
-    ],
+    description: 'Full-stack developer in Helsinki, Finland. Building fast, beautiful, accessible products.',
+    images: [{ url: '/profile.jpg', width: 800, height: 800, alt: 'Alhasan Al-Qaysi' }],
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Alhasan Al-Qaysi | Full-Stack Web Developer',
-    description: 'Full-stack web developer based in Helsinki, Finland.',
-    images: ['/profile.jpg'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  verification: {
-    google: 'your-google-verification-code',
-  },
+  robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${outfit.variable}`}>
+      <head>
+        {/* JetBrains Mono for code elements */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+        />
+      </head>
       <body>
         <ThemeProvider>
-          <StarField />
-          <CursorGlow />
           {children}
           <Toaster
             position="bottom-right"
             toastOptions={{
               style: {
-                background: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border)',
-                borderRadius: '12px',
+                background: 'var(--card)',
+                color: 'var(--text1)',
+                border: '1px solid var(--border2)',
+                borderRadius: '10px',
                 fontFamily: 'var(--font-body)',
+                fontSize: '14px',
+                boxShadow: '0 4px 20px rgba(0,0,0,.08)',
               },
-              success: {
-                iconTheme: { primary: '#38bdf8', secondary: '#080c10' },
-              },
-              error: {
-                iconTheme: { primary: '#f87171', secondary: '#080c10' },
-              },
+              success: { iconTheme: { primary: '#0d9488', secondary: '#fff' } },
+              error:   { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
             }}
           />
         </ThemeProvider>

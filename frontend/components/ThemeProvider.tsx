@@ -1,45 +1,34 @@
 'use client';
-
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark' | 'light';
+type Theme = 'light' | 'dark';
+interface ThemeCtx { theme: Theme; toggle: () => void; }
 
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  toggleTheme: () => {},
-});
+const Ctx = createContext<ThemeCtx>({ theme: 'light', toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<Theme>('light');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as Theme;
-    if (saved) setTheme(saved);
-    setMounted(true);
+    // read saved preference, fall back to system preference
+    const saved = localStorage.getItem('theme') as Theme | null;
+    const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const t = saved ?? preferred;
+    setTheme(t);
+    document.body.classList.toggle('dark', t === 'dark');
+    setReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-    document.documentElement.classList.toggle('light', theme === 'light');
-    localStorage.setItem('theme', theme);
-  }, [theme, mounted]);
+  const toggle = () => {
+    const next: Theme = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    localStorage.setItem('theme', next);
+    document.body.classList.toggle('dark', next === 'dark');
+  };
 
-  const toggleTheme = () =>
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-
-  if (!mounted) return <>{children}</>;
-
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  if (!ready) return null;
+  return <Ctx.Provider value={{ theme, toggle }}>{children}</Ctx.Provider>;
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => useContext(Ctx);

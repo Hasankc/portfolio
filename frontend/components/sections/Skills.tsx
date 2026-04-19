@@ -1,175 +1,152 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
 
-interface Skill {
-  name:     string;
-  level:    number;  // 0-100 — subjective self-rating, not gospel
-  category: 'frontend' | 'backend' | 'database' | 'tools';
-}
+type Cat = 'Frontend' | 'Backend' | 'Database' | 'Tools';
 
-// honestly these percentages are rough self-assessments.
-// "90% React" doesn't mean I know every edge case — it means I'm very comfortable with it
-const skills: Skill[] = [
-  { name: 'React / Next.js',      level: 90, category: 'frontend'  },
-  { name: 'TypeScript',           level: 85, category: 'frontend'  },
-  { name: 'Vue.js',               level: 88, category: 'frontend'  },
-  { name: 'HTML / CSS',           level: 95, category: 'frontend'  },
-  { name: 'JavaScript (ES2024)',  level: 92, category: 'frontend'  },
-  { name: 'Node.js / Express',    level: 83, category: 'backend'   },
-  { name: 'Python / FastAPI',     level: 75, category: 'backend'   },
-  { name: 'REST APIs',            level: 88, category: 'backend'   },
-  { name: 'PostgreSQL',           level: 72, category: 'database'  },
-  { name: 'MongoDB',              level: 78, category: 'database'  },
-  { name: 'Git / GitHub',         level: 90, category: 'tools'     },
-  { name: 'Docker',               level: 65, category: 'tools'     },
-  { name: 'Azure / Google Cloud', level: 62, category: 'tools'     },
+const SKILLS: { name: string; pct: number; cat: Cat; icon: string; id: string }[] = [
+  { id: 'react',    name: 'React / Next.js',      pct: 92, cat: 'Frontend',  icon: '⚛️' },
+  { id: 'ts',       name: 'TypeScript',            pct: 88, cat: 'Frontend',  icon: '🔷' },
+  { id: 'vue',      name: 'Vue.js',                pct: 90, cat: 'Frontend',  icon: '💚' },
+  { id: 'html-css', name: 'HTML & CSS',            pct: 96, cat: 'Frontend',  icon: '🎨' },
+  { id: 'js',       name: 'JavaScript',            pct: 93, cat: 'Frontend',  icon: '🟡' },
+  { id: 'node',     name: 'Node.js / Express',     pct: 85, cat: 'Backend',   icon: '🟢' },
+  { id: 'python',   name: 'Python / FastAPI',      pct: 78, cat: 'Backend',   icon: '🐍' },
+  { id: 'rest',     name: 'REST APIs',             pct: 90, cat: 'Backend',   icon: '🔌' },
+  { id: 'postgres', name: 'PostgreSQL',            pct: 74, cat: 'Database',  icon: '🐘' },
+  { id: 'mongo',    name: 'MongoDB',               pct: 80, cat: 'Database',  icon: '🍃' },
+  { id: 'git',      name: 'Git / GitHub',          pct: 93, cat: 'Tools',     icon: '🐙' },
+  { id: 'docker',   name: 'Docker',                pct: 68, cat: 'Tools',     icon: '🐳' },
+  { id: 'cloud',    name: 'Azure / Google Cloud',  pct: 65, cat: 'Tools',     icon: '☁️' },
 ];
 
-// each category gets its own accent colour so the tab + bars match
-const categoryColors: Record<Skill['category'], string> = {
-  frontend: '#38bdf8',
-  backend:  '#a78bfa',
-  database: '#34d399',
-  tools:    '#fb923c',
-};
-
-const categoryLabels: Record<Skill['category'], string> = {
-  frontend: 'Frontend',
-  backend:  'Backend',
-  database: 'Databases',
-  tools:    'Tools & Cloud',
-};
-
-const tabs: Skill['category'][] = ['frontend', 'backend', 'database', 'tools'];
-
-// little emoji icons — nothing fancy, just makes the list easier to scan
-const techIcons: Record<string, string> = {
-  'React / Next.js':      '⚛️',
-  'TypeScript':           '🔷',
-  'Vue.js':               '💚',
-  'HTML / CSS':           '🎨',
-  'JavaScript (ES2024)':  '🟡',
-  'Node.js / Express':    '🟢',
-  'Python / FastAPI':     '🐍',
-  'REST APIs':            '🔌',
-  'PostgreSQL':           '🐘',
-  'MongoDB':              '🍃',
-  'Git / GitHub':         '🐙',
-  'Docker':               '🐳',
-  'Azure / Google Cloud': '☁️',
+const CATS: Cat[] = ['Frontend', 'Backend', 'Database', 'Tools'];
+const COLORS: Record<Cat, string> = {
+  Frontend: '#0d9488',
+  Backend:  '#7c3aed',
+  Database: '#059669',
+  Tools:    '#d97706',
 };
 
 export function Skills() {
-  const [activeTab, setActiveTab] = useState<Skill['category']>('frontend');
-  const [animated, setAnimated]   = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
+  const [active,   setActive]   = useState<Cat>('Frontend');
+  const [animated, setAnimated] = useState(false);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
+    const obs = new IntersectionObserver(
+      es => {
+        if (es[0].isIntersecting) {
           setAnimated(true);
-          entries[0].target.querySelectorAll('.reveal').forEach((el, i) => {
-            setTimeout(() => el.classList.add('visible'), i * 80);
-          });
+          es[0].target.querySelectorAll('.reveal').forEach((el, i) =>
+            setTimeout(() => el.classList.add('in'), i * 70));
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.15 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
-  // when switching tabs, briefly reset animated so bars re-fill
-  const handleTabChange = (tab: Skill['category']) => {
-    setActiveTab(tab);
+  const switchCat = (c: Cat) => {
     setAnimated(false);
+    setActive(c);
     setTimeout(() => setAnimated(true), 50);
   };
 
-  const filtered = skills.filter((s) => s.category === activeTab);
+  const shown = SKILLS.filter(s => s.cat === active);
+  const c     = COLORS[active];
 
   return (
-    <section id="skills" ref={sectionRef} className="section-padding">
-      <div className="max-w-5xl mx-auto">
+    /* id="skills" — scroll target */
+    <section
+      id="skills"
+      ref={ref}
+      data-section="skills"
+      data-testid="skills-section"
+      data-active-category={active}
+      className="sec sec-alt"
+    >
+      <div id="skills-inner" className="wrap">
 
-        <div className="text-center mb-14 reveal">
-          <p
-            className="text-[var(--accent)] text-sm mb-3 tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            // skills &amp; technologies
-          </p>
-          <h2 className="section-title">
-            My <span className="gradient-text">Technical</span> Stack
+        {/* id="skills-header" — label + heading */}
+        <div id="skills-header" className="reveal" style={{ textAlign: 'center', marginBottom: 48 }}>
+          <p id="skills-label" className="label" style={{ marginBottom: 10 }}>// skills &amp; technologies</p>
+          <h2 id="skills-heading" className="subhead">
+            My <span id="skills-heading-grad" className="grad" style={{ paddingRight: 4 }}>Technical</span> Stack
           </h2>
-          <p className="text-[var(--text-secondary)] mt-4 max-w-lg mx-auto">
-            Tools I use day to day. Frontend is where I spend most of my time,
-            but I can hold my own on the backend side too.
+          <p id="skills-subtext" style={{ color: 'var(--text2)', marginTop: 10, maxWidth: 440, margin: '10px auto 0', fontSize: 15 }}>
+            Honest self-assessments — not marketing numbers.
           </p>
         </div>
 
-        {/* category tab switcher */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12 reveal">
-          {tabs.map((tab) => (
+        {/* id="skills-tabs" — category filter buttons */}
+        <div
+          id="skills-tabs"
+          data-testid="skills-tabs"
+          className="reveal"
+          style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 40 }}
+        >
+          {CATS.map(cat => (
             <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300"
-              style={
-                activeTab === tab
-                  ? {
-                      background: `${categoryColors[tab]}20`,
-                      color:       categoryColors[tab],
-                      border:      `1px solid ${categoryColors[tab]}40`,
-                      boxShadow:   `0 0 20px ${categoryColors[tab]}15`,
-                    }
-                  : {
-                      background: 'transparent',
-                      color:      'var(--text-secondary)',
-                      border:     '1px solid var(--border)',
-                    }
-              }
+              key={cat}
+              id={`skills-tab-${cat.toLowerCase()}`}
+              data-testid={`skills-tab-${cat.toLowerCase()}`}
+              data-active={active === cat}
+              onClick={() => switchCat(cat)}
+              style={{
+                padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', transition: 'all .22s', fontFamily: 'var(--font-body)',
+                background: active === cat ? `${COLORS[cat]}14` : 'var(--card)',
+                color: active === cat ? COLORS[cat] : 'var(--text2)',
+                border: `1px solid ${active === cat ? COLORS[cat] + '35' : 'var(--border2)'}`,
+                boxShadow: active === cat ? `0 0 0 3px ${COLORS[cat]}10` : 'none',
+              }}
             >
-              {categoryLabels[tab]}
+              {cat}
             </button>
           ))}
         </div>
 
-        {/* skill bars */}
-        <div className="space-y-5">
-          {filtered.map((skill, i) => (
+        {/* id="skills-list" — the animated skill bars */}
+        <div
+          id="skills-list"
+          data-testid="skills-list"
+          style={{ maxWidth: 660, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          {shown.map((s, i) => (
+            /* id="skill-{id}" — individual skill row */
             <div
-              key={skill.name}
-              className="glass-card p-5 reveal"
-              style={{ transitionDelay: `${i * 60}ms` }}
+              key={s.id}
+              id={`skill-${s.id}`}
+              data-testid={`skill-${s.id}`}
+              data-skill-name={s.name}
+              data-skill-pct={s.pct}
+              className="reveal card"
+              style={{ padding: '14px 18px', transitionDelay: `${i * 55}ms` }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{techIcons[skill.name] ?? '🔧'}</span>
-                  <span className="font-medium text-[var(--text-primary)]">{skill.name}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <span id={`skill-${s.id}-icon`} style={{ fontSize: 17 }}>{s.icon}</span>
+                  <span id={`skill-${s.id}-name`} style={{ fontWeight: 500, fontSize: 14, color: 'var(--text1)' }}>{s.name}</span>
                 </div>
                 <span
-                  className="text-sm font-semibold"
-                  style={{ color: categoryColors[activeTab], fontFamily: 'var(--font-mono)' }}
+                  id={`skill-${s.id}-pct`}
+                  style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: c }}
                 >
-                  {skill.level}%
+                  {s.pct}%
                 </span>
               </div>
-
-              {/* the actual bar — animates width from 0 when animated=true */}
-              <div
-                className="h-1.5 rounded-full overflow-hidden"
-                style={{ background: 'var(--border-subtle)' }}
-              >
+              {/* id="skill-{id}-track" — gray background track */}
+              <div id={`skill-${s.id}-track`} style={{ height: 5, borderRadius: 3, background: 'var(--bg3)', overflow: 'hidden' }}>
+                {/* id="skill-{id}-fill" — animated colored fill */}
                 <div
-                  className="h-full rounded-full transition-all duration-1000 ease-out"
+                  id={`skill-${s.id}-fill`}
                   style={{
-                    width:           animated ? `${skill.level}%` : '0%',
-                    background:      `linear-gradient(90deg, ${categoryColors[activeTab]}, ${categoryColors[activeTab]}80)`,
-                    boxShadow:       `0 0 10px ${categoryColors[activeTab]}50`,
-                    transitionDelay: `${i * 80}ms`,
+                    height: '100%', borderRadius: 3,
+                    background: `linear-gradient(90deg, ${c}, ${c}aa)`,
+                    boxShadow: `0 0 8px ${c}40`,
+                    width: animated ? `${s.pct}%` : '0%',
+                    transition: `width .9s cubic-bezier(.4,0,.2,1) ${i * 70}ms`,
                   }}
                 />
               </div>
@@ -177,10 +154,21 @@ export function Skills() {
           ))}
         </div>
 
-        {/* misc tech chips at the bottom for things that don't need a full bar */}
-        <div className="mt-14 flex flex-wrap justify-center gap-3 reveal">
-          {['Agile / Scrum', 'Microservices', 'Web3', 'Google Cloud', 'Blockchain', 'React Native'].map((tech) => (
-            <span key={tech} className="tag">{tech}</span>
+        {/* id="skills-extra-tags" — misc tech chips */}
+        <div
+          id="skills-extra-tags"
+          data-testid="skills-extra-tags"
+          className="reveal"
+          style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8, marginTop: 40 }}
+        >
+          {['Web3', 'Blockchain', 'React Native', 'Microservices', 'Agile/Scrum', 'Google Cloud', 'CI/CD', 'Tailwind CSS'].map(t => (
+            <span
+              key={t}
+              id={`skills-tag-${t.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+              className="tag"
+            >
+              {t}
+            </span>
           ))}
         </div>
 

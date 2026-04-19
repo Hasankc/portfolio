@@ -1,193 +1,172 @@
 'use client';
-
 import { useEffect, useRef } from 'react';
 import { Briefcase, GraduationCap, Trophy } from 'lucide-react';
 
-// I decided to combine work, education, and awards into one timeline
-// rather than having separate sections — it tells a cleaner story
-// and keeps the page from getting too long
-const timeline = [
+const ITEMS = [
   {
-    type:     'work',
-    icon:     Briefcase,
-    title:    'Software Developer',
-    company:  'Cyberday | Agendium Oy',
-    period:   '2023 – Present',
-    location: 'Helsinki, Finland',
-    color:    '#38bdf8',
+    id: 'cyberday', icon: Briefcase, color: '#0d9488', type: 'work',
+    title: 'Software Developer', org: 'Cyberday | Agendium Oy',
+    period: '2023 – Present', location: 'Helsinki, Finland',
     bullets: [
-      'Build and maintain Vue.js frontend for a cybersecurity compliance platform used by 1,000+ organizations.',
-      'Created a reusable component library that cut down repeated UI work across the whole app.',
-      'Tracked down and fixed 20+ high-priority bugs — things breaking silently in production, edge cases in data display, broken user flows.',
-      'Improved initial load performance by auditing and removing dead code + redundant API calls.',
-      'Worked in Agile sprints alongside designers and backend engineers — a lot of async Slack threads and occasional messy standups.',
-      'Also contributed to the Python backend: mostly REST API work and business logic to support new frontend features.',
+      'Built and maintained Vue.js frontend for a cybersecurity compliance platform used by 1,000+ organizations.',
+      'Created a reusable component library that cut repeated UI work across the entire app.',
+      'Found and fixed 50+ high-priority bugs — silent failures, broken data displays, edge-case crashes.',
+      'Improved initial load performance by removing dead code and reducing redundant API calls.',
+      'Contributed to Python backend: REST API design and business logic supporting new frontend features.',
+      'Worked in Agile sprints with designers and backend engineers.',
     ],
-    tech: ['Vue.js', 'Python', 'REST APIs', 'Agile/Scrum'],
+    tech: ['Vue.js', 'Python', 'REST APIs', 'Agile/Scrum', 'Git'],
   },
   {
-    type:     'education',
-    icon:     GraduationCap,
-    title:    'ICT / Python Programme',
-    company:  'Taitotalo',
-    period:   'Nov 2024 – Jun 2025',
-    location: 'Helsinki, Finland',
-    color:    '#a78bfa',
-    bullets: [
-      'Focused on Python programming and broader ICT concepts. Good refresher on fundamentals.',
-    ],
+    id: 'taitotalo', icon: GraduationCap, color: '#7c3aed', type: 'education',
+    title: 'ICT / Python Programme', org: 'Taitotalo',
+    period: 'Nov 2024 – Jun 2025', location: 'Helsinki, Finland',
+    bullets: ['Python programming and broader ICT fundamentals.'],
     tech: ['Python', 'ICT'],
   },
   {
-    type:     'education',
-    icon:     GraduationCap,
-    title:    'Full Stack Open',
-    company:  'University of Helsinki',
-    period:   '2022 – 2023',
-    location: 'Online',
-    color:    '#a78bfa',
-    bullets: [
-      'Covered React, Node.js, TypeScript, GraphQL, CI/CD, containers, and testing. Probably the most practical online course I\'ve done.',
-    ],
+    id: 'fso', icon: GraduationCap, color: '#7c3aed', type: 'education',
+    title: 'Full Stack Open', org: 'University of Helsinki',
+    period: '2022 – 2023', location: 'Online',
+    bullets: ['React, Node.js, TypeScript, GraphQL, CI/CD, containers, testing. One of the best online courses I\'ve done.'],
     tech: ['React', 'Node.js', 'TypeScript', 'GraphQL', 'Docker'],
   },
   {
-    type:     'award',
-    icon:     Trophy,
-    title:    '2nd Place — TX Web3 Challenge Track',
-    company:  'Junction 2022 Hackathon',
-    period:   'Nov 2022',
-    location: 'Helsinki, Finland',
-    color:    '#fbbf24',
+    id: 'junction2022', icon: Trophy, color: '#d97706', type: 'award',
+    title: '2nd Place — TX Web3 Challenge', org: 'Junction 2022 Hackathon',
+    period: 'Nov 2022', location: 'Helsinki, Finland',
     bullets: [
-      '48-hour hackathon. Built a marketplace MVP using blockchain + Google Cloud Video Intelligence API.',
-      'The idea: content creators get paid based on actual content performance, not just flat rates. Judges liked it enough for 2nd place.',
+      '48-hour hackathon. Built a Web3 marketplace + Google Cloud Video Intelligence ensuring fair pay for content creators.',
+      'Judges liked the concept enough for 2nd place in the TX Web3 challenge track.',
     ],
     tech: ['React', 'Node.js', 'Web3', 'Google Cloud', 'Blockchain'],
   },
   {
-    type:     'education',
-    icon:     GraduationCap,
-    title:    'Software Development Academy',
-    company:  'Integrify',
-    period:   'Jan – Jun 2022',
-    location: 'Helsinki, Finland',
-    color:    '#a78bfa',
-    bullets: [
-      'Intensive bootcamp that got me writing real full-stack code from week one. Where it all properly started.',
-    ],
+    id: 'integrify', icon: GraduationCap, color: '#7c3aed', type: 'education',
+    title: 'Software Development Academy', org: 'Integrify',
+    period: 'Jan – Jun 2022', location: 'Helsinki, Finland',
+    bullets: ['Intensive bootcamp — real full-stack code from week one. Where it all properly started.'],
     tech: ['JavaScript', 'React', 'Node.js', 'PostgreSQL'],
   },
 ];
 
 export function Experience() {
-  const sectionRef = useRef<HTMLElement>(null);
-
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          entries[0].target.querySelectorAll('.reveal').forEach((el, i) => {
-            setTimeout(() => el.classList.add('visible'), i * 120);
-          });
-        }
+    const obs = new IntersectionObserver(
+      es => {
+        if (es[0].isIntersecting)
+          es[0].target.querySelectorAll('.reveal').forEach((el, i) =>
+            setTimeout(() => el.classList.add('in'), i * 100));
       },
-      { threshold: 0.1 },
+      { threshold: 0.05 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
   }, []);
 
   return (
-    <section id="experience" ref={sectionRef} className="section-padding">
-      <div className="max-w-4xl mx-auto">
+    /* id="experience" — scroll target */
+    <section
+      id="experience"
+      ref={ref}
+      data-section="experience"
+      data-testid="experience-section"
+      className="sec"
+    >
+      <div id="experience-inner" className="wrap">
 
-        <div className="text-center mb-16 reveal">
-          <p
-            className="text-[var(--accent)] text-sm mb-3 tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            // experience &amp; education
-          </p>
-          <h2 className="section-title">
-            My <span className="gradient-text">Journey</span>
+        {/* id="experience-header" */}
+        <div id="experience-header" className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
+          <p id="experience-label" className="label" style={{ marginBottom: 10 }}>// journey</p>
+          <h2 id="experience-heading" className="subhead">
+            Experience &amp;{' '}
+            <span id="experience-heading-grad" className="grad" style={{ paddingRight: 4 }}>Education</span>
           </h2>
         </div>
 
-        <div className="relative">
-          {/* the vertical line connecting all the cards — gradient fades out at the bottom */}
-          <div
-            className="absolute left-8 top-0 bottom-0 w-px hidden md:block"
-            style={{ background: 'linear-gradient(to bottom, var(--accent), var(--accent-secondary), transparent)' }}
-          />
-
-          <div className="space-y-8">
-            {timeline.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <div key={i} className="reveal relative md:pl-20">
-
-                  {/* icon box — sits on top of the vertical line */}
-                  <div
-                    className="hidden md:flex absolute left-0 w-16 h-16 rounded-2xl items-center justify-center"
-                    style={{
-                      background: `${item.color}15`,
-                      border:     `1px solid ${item.color}30`,
-                      boxShadow:  `0 0 20px ${item.color}10`,
-                    }}
-                  >
-                    <Icon size={22} style={{ color: item.color }} />
-                  </div>
-
-                  <div className="glass-card p-6 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-                          {item.title}
-                        </h3>
-                        <p style={{ color: item.color }} className="font-medium">
-                          {item.company}
-                        </p>
-                        <p className="text-sm text-[var(--text-muted)]">{item.location}</p>
-                      </div>
-                      <span
-                        className="shrink-0 text-xs px-3 py-1.5 rounded-full"
-                        style={{
-                          background:  `${item.color}15`,
-                          color:        item.color,
-                          border:      `1px solid ${item.color}25`,
-                          fontFamily:  'var(--font-mono)',
-                        }}
-                      >
-                        {item.period}
-                      </span>
-                    </div>
-
-                    {item.bullets.length > 0 && (
-                      <ul className="space-y-2">
-                        {item.bullets.map((b, j) => (
-                          <li key={j} className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
-                            <span
-                              className="mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full"
-                              style={{ background: item.color }}
-                            />
-                            {b}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {item.tech.map((t) => (
-                        <span key={t} className="code-badge">{t}</span>
-                      ))}
-                    </div>
-                  </div>
+        {/* id="experience-timeline" — the full list of items */}
+        <div
+          id="experience-timeline"
+          data-testid="experience-timeline"
+          style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}
+        >
+          {ITEMS.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              /* id="exp-{id}" — individual timeline entry */
+              <div
+                key={item.id}
+                id={`exp-${item.id}`}
+                data-testid={`exp-${item.id}`}
+                data-exp-type={item.type}
+                data-exp-org={item.org}
+                className="reveal"
+                style={{ display: 'flex', gap: 16, transitionDelay: `${i * 95}ms` }}
+              >
+                {/* id="exp-{id}-icon" — colored icon on the left */}
+                <div
+                  id={`exp-${item.id}-icon`}
+                  style={{
+                    flexShrink: 0, width: 52, height: 52, borderRadius: 13,
+                    background: `${item.color}12`, border: `1px solid ${item.color}28`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 2,
+                  }}
+                >
+                  <Icon size={20} style={{ color: item.color }} />
                 </div>
-              );
-            })}
-          </div>
+
+                {/* id="exp-{id}-card" — the content card */}
+                <div id={`exp-${item.id}-card`} className="card" style={{ flex: 1, padding: 22 }}>
+
+                  {/* id="exp-{id}-header" — title + period badge */}
+                  <div id={`exp-${item.id}-header`} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                    <div id={`exp-${item.id}-meta`}>
+                      <div id={`exp-${item.id}-title`} style={{ fontWeight: 700, fontSize: 15, color: 'var(--text1)' }}>{item.title}</div>
+                      <div id={`exp-${item.id}-org`} style={{ fontSize: 13, color: item.color, fontWeight: 600, marginTop: 2 }}>{item.org}</div>
+                      <div id={`exp-${item.id}-location`} style={{ fontSize: 12, color: 'var(--text3)', marginTop: 1 }}>{item.location}</div>
+                    </div>
+                    <span
+                      id={`exp-${item.id}-period`}
+                      style={{ fontSize: 11, padding: '4px 11px', borderRadius: 20, background: `${item.color}12`, color: item.color, border: `1px solid ${item.color}22`, fontFamily: 'var(--font-mono)', fontWeight: 600, height: 'fit-content', whiteSpace: 'nowrap' }}
+                    >
+                      {item.period}
+                    </span>
+                  </div>
+
+                  {/* id="exp-{id}-bullets" — bullet points */}
+                  <ul id={`exp-${item.id}-bullets`} style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                    {item.bullets.map((b, j) => (
+                      <li
+                        key={j}
+                        id={`exp-${item.id}-bullet-${j}`}
+                        style={{ display: 'flex', gap: 9, fontSize: 13, color: 'var(--text2)', lineHeight: 1.65 }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: item.color, flexShrink: 0, marginTop: 7 }} />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* id="exp-{id}-tech" — tech stack chips */}
+                  <div id={`exp-${item.id}-tech`} style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {item.tech.map(t => (
+                      <span
+                        key={t}
+                        id={`exp-${item.id}-tech-${t.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                        style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: 'var(--bg2)', color: 'var(--text2)', fontFamily: 'var(--font-mono)', border: '1px solid var(--border2)', fontWeight: 500 }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
         </div>
+
       </div>
     </section>
   );

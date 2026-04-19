@@ -1,81 +1,84 @@
-import os
+"""
+main.py — portfolio backend
+
+FastAPI app. No slowapi dependency — rate limiting is handled
+by the custom limiter in middleware/security.py using stdlib only.
+
+Local:      uvicorn main:app --reload --port 8000
+Production: Render reads the start command from the dashboard
+"""
+from __future__ import annotations
+
 import logging
+import os
+from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
+
+from middleware.security import SECURITY_HEADERS
+from routes import contact, ai
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level  = logging.INFO,
+    format = "%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
+)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
 
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("portfolio backend starting — Groq (AI) + Resend (email), both free")
+    yield
+    logger.info("portfolio backend shutting down")
+
+
+app = FastAPI(
+    title     = "Alhasan Al-Qaysi — Portfolio API",
+    version   = "1.0.0",
+    docs_url  = "/docs" if os.getenv("ENVIRONMENT") != "production" else None,
+    redoc_url = None,
+    lifespan  = lifespan,
+)
+
+# CORS
+raw_origins    = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins.split(",")],
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_origins     = allowed_origins,
+    allow_credentials = False,
+    allow_methods     = ["GET", "POST"],
+    allow_headers     = ["Content-Type", "Accept"],
 )
+
+# security headers on every response
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for key, value in SECURITY_HEADERS.items():
+        response.headers[key] = value
+    return response
+
+# routes
+app.include_router(contact.router, prefix="/api")
+app.include_router(ai.router,      prefix="/api")
+
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "portfolio-api", "version": "1.0.0"}
 
-@app.post("/api/chat")
-async def chat(request: Request):
-    try:
-        from groq import Groq
-        data = await request.json()
-        messages = data.get("messages", [])
-        system = data.get("system", "You are a helpful assistant for Alhasan Al-Qaysi's portfolio.")
 
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            return {"reply": "AI not configured yet.", "success": False}
+@app.exception_handler(404)
+async def not_found(_: Request, __: Exception) -> JSONResponse:
+    return JSONResponse(status_code=404, content={"detail": "not found"})
 
-        client = Groq(api_key=api_key)
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "system", "content": system}, *messages],
-            max_tokens=512,
-        )
-        return {"reply": response.choices[0].message.content, "success": True}
-    except Exception as e:
-        logger.error("Chat error: %s", e)
-        return JSONResponse(status_code=500, content={"detail": str(e)})
-
-@app.post("/api/contact")
-async def contact(request: Request):
-    try:
-        import resend
-        data = await request.json()
-        name    = data.get("name", "")
-        email   = data.get("email", "")
-        subject = data.get("subject", "")
-        message = data.get("message", "")
-
-        api_key = os.getenv("RESEND_API_KEY", "")
-        to_addr = os.getenv("CONTACT_EMAIL_TO", "alhasanal_qaysi@yahoo.com")
-
-        if not api_key:
-            logger.warning("No RESEND_API_KEY — contact from %s", email)
-            return {"success": True, "message": "Got it!"}
-
-        resend.api_key = api_key
-        resend.Emails.send({
-            "from": "Portfolio <onboarding@resend.dev>",
-            "to": [to_addr],
-            "reply_to": email,
-            "subject": f"[Portfolio] {subject}",
-            "html": f"<p><b>From:</b> {name} &lt;{email}&gt;</p><p><b>Message:</b><br>{message}</p>",
-        })
-        return {"success": True, "message": "Got it — I'll get back to you soon!"}
-    except Exception as e:
-        logger.error("Contact error: %s", e)
-        return JSONResponse(status_code=500, content={"detail": str(e)})
 
 if __name__ == "__main__":
     import uvicorn
