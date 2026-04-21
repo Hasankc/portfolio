@@ -188,7 +188,7 @@ export function Hero() {
               <a
                 id="hero-social-linkedin"
                 data-testid="hero-social-linkedin"
-                href="https://linkedin.com/in/alhasan-al-qaysi"
+                href="https://linkedin.com/in/hasanalqaysi"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn profile"
