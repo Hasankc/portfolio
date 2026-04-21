@@ -13,7 +13,7 @@ const NAV = [
 const SOCIALS = [
   { id: 'github',   Icon: Github,   href: 'https://github.com/Hasankc',              label: 'GitHub'   },
   { id: 'email',    Icon: Mail,     href: 'mailto:alhasanal_qaysi@yahoo.com',         label: 'Email'    },
-  { id: 'linkedin', Icon: Linkedin, href: 'https://linkedin.com/in/alhasan-al-qaysi', label: 'LinkedIn' },
+  { id: 'linkedin', Icon: Linkedin, href: 'https://linkedin.com/in/hasanalqaysi', label: 'LinkedIn' },
 ];
 
 export function Footer() {
