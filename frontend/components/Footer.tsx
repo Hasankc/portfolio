@@ -1,3 +1,4 @@
+'use client';
 import { Github, Linkedin, Mail, Heart, Download } from 'lucide-react';
 
 const NAV = [
